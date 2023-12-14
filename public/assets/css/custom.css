@@ -1,0 +1,130 @@
+.mult-img-box{
+    position: relative;
+    margin-right:10px;
+    width: 100px;
+    height: 100px;
+    margin-bottom: 10px;
+    border: 2px solid #ccc;
+
+}
+
+.mult-img-box img{
+    height: 100%;
+    width:100%;
+}
+
+.img-delete{
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: #ccc;
+    padding:2px 5px;
+    display:flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.form_box_inr{
+    border: 1px solid #012970;
+    margin-bottom: 15px;
+
+}
+.form_box .form_box_inr:last-child{
+    margin: 0 !important;
+}
+.box_title {
+background-color: #012970;
+border-bottom: 1px solid #012970;
+padding: 10px 15px;
+}
+.box_title h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+    color: #fff;
+}
+.form_box_info {
+    padding: 15px;
+}
+.form_button{
+    color: #fff;
+    background-color: #012970;
+}
+.form_button:hover{
+    border-color: #012970;
+    color: #012970;
+}
+.custom-btn, .custom-btn:hover{
+    background-color: #012970;
+    color: #fff;
+}
+
+.custom_dt_table .dataTables_length{
+    margin-bottom: 20px;
+}
+
+.custom_dt_table .table{
+    border: 2px solid #012970 !important;
+    border-bottom: #012970;
+}
+
+.custom_dt_table .table thead th{
+    background-color: #012970;
+    color: #fff;
+}
+
+.custom_dt_table .table tbody td a {
+    border-radius: 50%;
+}
+
+.desktop_modal{
+    max-width: 900px;
+}
+
+.prmission_box .accordion-item {
+    border: 1px solid #012970;
+    margin-bottom: 20px;
+}
+
+.info_card{
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 10px;
+}
+
+.info_card_inr h5{
+    font-size: 18px;
+    color: #012970;
+}
+
+.info_card_inr h4{
+    font-size: 25px;
+}
+
+.info_card_inr .card-icon{
+    background-color: #012970;
+    color: #fff;
+}
+
+.form_box_info .select2.select2-container {
+    width: 100% !important;
+    display: block;
+}
+
+.sidebar-nav #report-nav li>a i {
+    font-size:16px;
+}
+
+.sidebar-nav .nav-content a {
+    padding:10px 10px 10px 40px;
+}
+
+@media (max-width:767px) {
+    .custom_dt_table .table th,.custom_dt_table .table td{
+        white-space: nowrap;
+    }
+    .custom_dt_table .dataTables_filter{
+        margin-bottom: 20px;
+    }
+}
