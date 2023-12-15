@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Admin;
-use Illuminate\Support\facades\Session; 
+use Illuminate\Support\facades\Session;
 
 class AuthController extends Controller
 {
@@ -21,33 +21,29 @@ class AuthController extends Controller
         return view('auth.admin.login');
     }
 
-  
+
 
     // Authenticate the Admin User
     public function Adminlogin(Request $request)
     {
-        $userdetail = Admin::where('email',$request->email)->first();
-        $userStatus = (isset($userdetail->status)) ? $userdetail->status : '';
-        
         $input = $request->except('_token');
 
-        $request->validate([    
+        $request->validate([
             'email' => 'required|email',
             'password' => 'required'
         ]);
 
-        if($userStatus == 1)
-        {
-              if(Auth::guard('admin')->attempt($input))
-              {
-       
+        if(Auth::guard('admin')->attempt($input)) {
+            $status = Auth::guard('admin')->user()->status;
+            if($status == 1){
                 $username = Auth::guard('admin')->user()->firstname." ".Auth::guard('admin')->user()->lastname;
-                return redirect()->route('admin.dashboard')->with('success', 'Welcome '.$username);
-                // return redirect()->intended();
-             
-              }
+                $intendedUrl = $request->session()->pull('url.intended', route('admin.dashboard'));
+                return redirect()->to($intendedUrl)->with('success', 'Welcome '.$username);
+            }else{
+                Auth::guard('admin')->logout();
+                return redirect()->route('admin.login')->with('error', 'Your Account has been Temporarily Blocked!');
+            }
         }
-
-         return back()->with('error', 'Please Enter Valid Email & Password');
+        return back()->with('error', 'Please Enter Valid Email & Password');
     }
 }

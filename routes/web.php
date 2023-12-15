@@ -4,7 +4,7 @@ use App\Http\Controllers\{AuthController,DashboardController,GeneralSettingContr
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\facades\Session; 
+use Illuminate\Support\facades\Session;
 
 
 /*
@@ -37,7 +37,7 @@ Route::get('admin/login', [AuthController::class,'showAdminLogin'])->name('admin
 Route::post('admin/do/login', [AuthController::class,'Adminlogin'])->name('admin.do.login');
 // Route::get('admin/logout',[AuthController::class,'Adminlogout'])->name('user.logout');
 Route::get('/logout', [AuthController::class, function() {
-    
+
         Auth::guard('admin')->logout();
 
     return redirect()->route('admin.login')->with('success', 'User Logout SuccessFully...');
@@ -46,7 +46,7 @@ Route::get('/logout', [AuthController::class, function() {
   //print
    Route::get('/orders/show/print/{id}',[OrderController::class ,'oneForm'])->name('order.show.print');
    Route::get('/orders/print/{id}',[OrderController::class ,'printOrder'])->name('order.print');
-       
+
 
 // Admin Routes
 Route::group(['prefix' => 'admin'], function ()
@@ -67,7 +67,7 @@ Route::group(['prefix' => 'admin'], function ()
 
         // Dashboard
         Route::get('dashboard', [DashboardController::class,'index'])->name('admin.dashboard');
-        
+
         //task-management
         Route::get('task-management',[TaskManageController::class,'index'])->name('task-management');
         Route::post('task-management/create',[TaskManageController::class,'create'])->name('task-manage.create');
@@ -75,7 +75,7 @@ Route::group(['prefix' => 'admin'], function ()
         Route::get('task-management/edit/{id}',[TaskManageController::class,'edit'])->name('task-manage.edit');
         Route::post('task-management/update',[TaskManageController::class,'update'])->name('task-manage.update');
         Route::post('task-management/list/destroy',[TaskManageController::class,'destroy'])->name('task-manage.destroy');
-        
+
         // User
         Route::get('users',[AdminController::class,'index'])->name('users');
         Route::get('users/profile',[AdminController::class,'userProfile'])->name('users.profile');
@@ -122,33 +122,35 @@ Route::group(['prefix' => 'admin'], function ()
         route::get('/orders/issue/saleing/{id}',[OrderController::class,'issueForSaleing'])->name('orders.iss.saleing');
 
         //getdata
-         Route::post('/get-data',[OrderController::class,'getData'])->name('getdata');
-         Route::get('/fetch-data',[OrderController::class,'fetchdata'])->name('fetchdata');
-        //Reports
+        Route::post('/get-data',[OrderController::class,'getData'])->name('getdata');
+        Route::get('/fetch-data',[OrderController::class,'fetchdata'])->name('fetchdata');
 
-            Route::get('/reports/order-history/', [ReportController::class,'orderHistoryReport'])->name('reports.orderhistory');
-        Route::get('/reports/order-history/{id}/detail', [ReportController::class,'orderHistoryDetail'])->name('reports.orderhistory.detail');
-        Route::get('/reports/type-of-work/', [ReportController::class,'typeOfWorkReport'])->name('reports.typeofwork');
-        Route::get('/reports/department-pending/', [ReportController::class,'departmentPendingReport'])->name('reports.pending');
-        Route::get('/reports/department-performance/', [ReportController::class,'departmentPerformanceReport'])->name('reports.performance');
-      
+
+        //Reports
+        Route::get('reports/order-history/', [ReportController::class,'orderHistoryReport'])->name('reports.order_history');
+        Route::get('reports/order-history/details/{id}', [ReportController::class,'orderHistoryReportDetails'])->name('reports.order_history_details');
+        Route::get('reports/department-pending-orders/', [ReportController::class,'departmentPendingOrdersReport'])->name('reports.department_pending_orders');
+        Route::get('reports/typesofworks-pending/', [ReportController::class,'typesOfWorksPendingReport'])->name('reports.typesofworks_pending');
+
+        Route::get('reports/department-performance/', [ReportController::class,'departmentPerformanceReport'])->name('reports.performance');
+
         //qrpage
 
         route::get('/qrcode-home',function(){
             return view('admin.qrpages.open-qrcode');
         })->name('qrpage');
-    
+
          //mobile
          Route::post('/customer-name',[OrderController::class,'mobileSetName'])->name('mobileSetName');
 
-        
+
         //types of work
 
         Route::get('/types_of_work',[types_workController::class,'index'])->name('types_work');
         Route::get('edit/types_of_work/{id}',[types_workController::class,'edit'])->name('edit.types_work');
         Route::post('update/types_of_work',[types_workController::class,'update'])->name('update.types_work');
-   
-  
-   
+
+
+
     });
 });

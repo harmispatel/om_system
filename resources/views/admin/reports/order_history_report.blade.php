@@ -1,0 +1,135 @@
+@php
+    $user_dt = Auth::guard('admin')->user();
+    $role_id = $user_dt->user_type;
+    $permissions = App\Models\RoleHasPermissions::where('role_id', $role_id)->pluck('permission_id');
+
+    foreach ($permissions as $permission) {
+    $permission_ids[] = $permission;
+    }
+
+    $report_permission = Spatie\Permission\Models\Permission::where('name', 'reports')->first();
+@endphp
+
+@extends('admin.layouts.admin-layout')
+@section('title', 'Order Management System | Reports | Order History')
+@section('content')
+
+    {{--page title--}}
+    <div class="pagetitle">
+        <h1>Reports</h1>
+        <div class="row">
+            <div class="col-md-8">
+                <nav>
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">Order History</li>
+                    </ol>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    {{-- Order History Report Section --}}
+    <section class="section dashboard">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="card-title">
+                            <label class="me-2">Order No.</label>
+                            <input type="text" id="order_number" name="order_number" class="rounded me-2 w-50" placeholder="Enter Order Number to Search Your Order">
+                            <button id="searchBtn" class="btn btn-dark btn-sm">Search</button>
+                        </div>
+                        <div class="table-responsive custom_dt_table">
+                            <table class="table w-100" id="OrderHistoryReportTable">
+                                <thead>
+                                    <tr>
+                                        <th>Order No.</th>
+                                        <th style="width: 25%">Customer</th>
+                                        <th>Current Department</th>
+                                        <th style="width: 15%">Duration</th>
+                                        <th>Handle By</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+@endsection
+
+@section('page-js')
+    <script type="text/javascript">
+
+        $(function() {
+
+            // Get Orders History Reports
+            var table = $('#OrderHistoryReportTable').DataTable({
+                lengthChange: false,
+                paging:true,
+                searching: false,
+                processing: true,
+                serverSide: true,
+                pageLength: 25,
+                ajax: {
+                    url:"{{ route('reports.order_history') }}",
+                    data: function(d) {
+                        d.order_number = $('#order_number').val(); // Pass the order number to the server
+                    }
+                },
+                columns: [
+                    {
+                        data: 'orderno',
+                        name: 'orderno'
+                    },
+                    {
+                        data: 'name',
+                        name: 'name',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'current_department',
+                        name: 'current_department',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'duration',
+                        name: 'duration',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'handleby',
+                        name: 'handleby',
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        data: 'actions',
+                        name: 'actions',
+                        orderable: false,
+                        searchable: false
+                    }
+                ]
+            });
+
+            // Search Specific Order
+            $('#searchBtn').on('click', function(){
+                table.ajax.reload(); // Redraw the DataTable with the new filter
+            });
+
+        });
+
+        @if (Session::has('success'))
+            toastr.success('{{ Session::get('success') }}')
+        @endif
+
+    </script>
+@endsection

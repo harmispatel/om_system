@@ -17,7 +17,7 @@
     $order_permission = Spatie\Permission\Models\Permission::where('name', 'order')->first();
     $counter_permission = Spatie\Permission\Models\Permission::where('name', 'new_order')->first();
     $report_permission = Spatie\Permission\Models\Permission::where('name', 'reports')->first();
-  
+
 @endphp
 
 {{-- Page Title --}}
@@ -66,7 +66,7 @@
                                     <h4><b>New Order</b></h4>
                                 </div>
                             </div>
-                            <div class="dash_card_title mt-1">      
+                            <div class="dash_card_title mt-1">
                             </div>
                             </a>
                         </div>
@@ -86,7 +86,7 @@
                                     <h4><b>Scan QrCode</b></h4>
                                 </div>
                             </div>
-                            <div class="dash_card_title mt-1">      
+                            <div class="dash_card_title mt-1">
                             </div>
                             </a>
                         </div>
@@ -97,7 +97,7 @@
                     <div class="info_card">
                         <div class="info_card_inr">
                             <h5></h5>
-                            <a href="{{route('reports.orderhistory')}}">
+                            <a href="{{route('reports.order_history')}}">
                             <div class="d-flex align-items-center">
                                 <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
                                     <i class="fa-solid fa-file"></i>
@@ -106,7 +106,7 @@
                                     <h5><b>Order History Report</b></h5>
                                 </div>
                             </div>
-                            <div class="dash_card_title mt-1">      
+                            <div class="dash_card_title mt-1">
                             </div>
                             </a>
                         </div>
@@ -118,7 +118,7 @@
                     <div class="info_card">
                         <div class="info_card_inr">
                             <h5></h5>
-                            <a href="{{route('reports.pending')}}">
+                            <a href="{{route('reports.department_pending_orders')}}">
                             <div class="d-flex align-items-center">
                                 <div class="card-icon rounded-circle d-flex align-items-center justify-content-center">
                                     <i class="fa-solid fa-file"></i>
@@ -127,7 +127,7 @@
                                     <h5><b>Department Pending Report</b></h5>
                                 </div>
                             </div>
-                            <div class="dash_card_title mt-1">      
+                            <div class="dash_card_title mt-1">
                             </div>
                             </a>
                         </div>
@@ -148,7 +148,7 @@
                                     <h5><b>Department Performance Report</b></h5>
                                 </div>
                             </div>
-                            <div class="dash_card_title mt-1">      
+                            <div class="dash_card_title mt-1">
                             </div>
                             </a>
                         </div>
@@ -199,7 +199,7 @@
                 @endif
             </div>
         </div>
-       
+
     </div>
 </section>
 

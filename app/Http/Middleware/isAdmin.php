@@ -23,6 +23,10 @@ class isAdmin
         }
         else
         {
+            if (!session()->has('url.intended')) {
+                session()->put('url.intended', $request->url());
+                session()->save();
+            }
             return redirect('/admin/login')->with('error',"You don't have Admin access.");
         }
     }

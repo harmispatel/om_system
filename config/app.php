@@ -52,7 +52,7 @@ return [
     |
     */
 
-    'url' => env('APP_URL', 'https://192.168.1.246/om_system'),
+    'url' => env('APP_URL', 'https://192.168.1.73/om_system'),
 
     'asset_url' => env('ASSET_URL', null),
 
@@ -238,7 +238,7 @@ return [
         // 'Image' => Intervention\Image\ImageManagerStatic::class,
         'DataTables' => Yajra\DataTables\Facades\DataTables::class,
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
-        
+
         'QrCode' => SimpleSoftwareIO\QrCode\Facades\QrCode::class,
       //  'PDF'=>  Barryvdh\DomPDF\ServiceProvider::class,
 
