@@ -378,98 +378,21 @@ class ReportController extends Controller
             })
             ->addColumn('remainig_time', function ($row)
             {
-                $out_switch = $row->department->permissions()->where('permission_type',2)->get();
-                $out_switch_id = (isset($out_switch[0]['id'])) ? $out_switch[0]['id'] : '';
-                $taskdetails = Task_manage::where('types_of_works', $row->typesofwork_id)->where('task2_id', $out_switch_id)->first();
+                $delivery_date = $row->order['deliverydate'];
+                $currentTime = Carbon::now();
+                $delivery_date_time = Carbon::parse($delivery_date);
 
-                $switch_in_date_time = $row->receive_time;
-                $working_hours = (isset($taskdetails['working_hours'])) ? $taskdetails['working_hours'] : 00;
-                $working_minutes = (isset($taskdetails['working_minutes'])) ? $taskdetails['working_minutes'] : 00;
-                $working_seconds = (isset($taskdetails['working_seconds'])) ? $taskdetails['working_seconds'] : 00;
+                // Calculate remaining time
+                $remainingTime = $currentTime->diff($delivery_date_time);
+                $remain_del_date = $currentTime->copy()->add($remainingTime);
 
-                // // Convert the string to a Carbon instance
-                $carbonDate = Carbon::parse($switch_in_date_time);
-                $currentDateTime = Carbon::now();
-                $office_start_time = '11:00:00';
-                $office_end_time = '20:00:00';
-                $office_start_time_array = explode(':', $office_start_time);
-                $office_end_time_array = explode(':', $office_end_time);
-
-                $working_days_array = [];
-                $general_settings = GeneralSetting::where('holiday', 'on')->get();
-                if(count($general_settings) > 0){
-                    foreach($general_settings as $g_setting){
-                        $day = (isset($g_setting['Days'])) ? $g_setting['Days'] : '';
-                        if($day == 'monday'){
-                            $working_days_array[$day] = 1;
-                        }elseif($day == 'tuesday'){
-                            $working_days_array[$day] = 2;
-                        }elseif($day == 'wednesday'){
-                            $working_days_array[$day] = 3;
-                        }elseif($day == 'thursday'){
-                            $working_days_array[$day] = 4;
-                        }elseif($day == 'friday'){
-                            $working_days_array[$day] = 5;
-                        }elseif($day == 'saturday'){
-                            $working_days_array[$day] = 6;
-                        }elseif($day == 'sunday'){
-                            $working_days_array[$day] = 0;
-                        }
-                    }
-                }
-
-                $total_work_seconds = $working_hours * 3600 + $working_minutes * 60 + $working_seconds;
-
-                // Calculate remaining office time for the current day
-                $remainingOfficeTime = $carbonDate->copy()->setTime($office_end_time_array[0], $office_end_time_array[1], $office_end_time_array[2])->diffInSeconds($carbonDate);
-
-                // Check if the current time is outside office hours
-                if ($carbonDate->lt($carbonDate->setTime($office_start_time_array[0], $office_start_time_array[1], $office_start_time_array[2])) || $carbonDate->gte($carbonDate->setTime($office_end_time_array[0], $office_end_time_array[1], $office_end_time_array[2]))) {
-                    $carbonDate = $carbonDate->copy()->setTime($office_start_time_array[0], $office_start_time_array[1], $office_start_time_array[2]);
-                }
-
-                // Check if the current day is a working day
-                $currentDay = strtolower($carbonDate->format('l'));
-
-                if (!in_array($currentDay, array_keys($working_days_array))) {
-                    // Find the next working day
-                    do {
-                        $carbonDate->addDay();
-                        $currentDay = strtolower($carbonDate->format('l'));
-                    } while (!in_array($currentDay, array_keys($working_days_array)));
-                }
-
-                // Use a while loop to deduct working time from remaining office time
-                while ($total_work_seconds > $remainingOfficeTime) {
-                    // Deduct remaining office time from total working time
-                    $total_work_seconds -= $remainingOfficeTime;
-
-                    // Move to the next working day
-                    $carbonDate->addDay();
-                    $currentDay = strtolower($carbonDate->format('l'));
-                    while (!in_array($currentDay, array_keys($working_days_array))) {
-                        $carbonDate->addDay();
-                        $currentDay = strtolower($carbonDate->format('l'));
-                    }
-
-                    // Set the time to the office start time
-                    $carbonDate->setTime($office_start_time_array[0], $office_start_time_array[1], $office_start_time_array[2]);
-
-                    // Calculate remaining office time for the new day
-                    $remainingOfficeTime = $carbonDate->copy()->setTime($office_end_time_array[0], $office_end_time_array[1], $office_end_time_array[2])->diffInSeconds($carbonDate);
-                }
-
-                $delivery_date = $carbonDate->addSeconds($total_work_seconds)->format('d-m-Y H:i:s');
-
-                // Check if the current date and time is after the specified date and time
-                if ($currentDateTime->gt($carbonDate)) {
+                 if ($currentTime->gt($remain_del_date)) {
                     $remainingTime = '<span class="text-danger">Delay Time</span>';
                 } else {
                     // Calculate the remaining time
-                    $diff = $currentDateTime->diff($carbonDate);
+                    $diff = $currentTime->diff($remain_del_date);
                     $remainingTime = $diff->days . ' days, ' . $diff->h . ' hours, ' . $diff->i . ' minutes, ' . $diff->s . ' seconds';
                 }
-
                 return $remainingTime;
             })
             ->rawColumns([

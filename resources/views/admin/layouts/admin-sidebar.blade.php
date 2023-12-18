@@ -41,13 +41,13 @@ $taskmanage_permission =  Spatie\Permission\Models\Permission::where('name', 'ta
         {{-- Reports Nav--}}
         @if(in_array($report_permission->id, $permission_ids))
             <li class="nav-item">
-                <a class="nav-link {{ $currentRouteName == 'reports.order_history' || $currentRouteName == 'reports.typeofwork' ||  $currentRouteName == 'reports.department_pending_orders' || $currentRouteName == 'reports.performance' || Route::currentRouteName() == 'reports.order_history_details' ?  '' :'collapsed'}} " data-bs-target="#reports-nav"
+                <a class="nav-link {{ $currentRouteName == 'reports.order_history' || $currentRouteName == 'reports.typeofwork' ||  $currentRouteName == 'reports.department_pending_orders' || $currentRouteName == 'reports.performance' || Route::currentRouteName() == 'reports.order_history_details' ||  Route::currentRouteName() == 'reports.typesofworks_pending' ?  '' :'collapsed'}} " data-bs-target="#reports-nav"
                 data-bs-toggle="collapse" href="#" aria-expanded="{{ Route::currentRouteName() == 'reports' ? 'true' : 'false'}}">
                     <i class="fa fa-solid fa-file {{Route::currentRouteName() == 'reports' ? 'icon-tab':''}}"></i><span>Reports</span>
                     <i class="bi bi-chevron-down ms-auto {{Route::currentRouteName() == 'reports' ? 'icon-tab':''}}"></i>
 
                 </a>
-                <ul id="reports-nav" class="nav-content sidebar-ul collapse {{ (Route::currentRouteName() == 'reports.order_history' || Route::currentRouteName() == 'reports.department_pending_orders' || $currentRouteName == 'reports.performance' || Route::currentRouteName() == 'reports.order_history_details') ? 'show':''}}" data-bs-parent="#sidebar-nav">
+                <ul id="reports-nav" class="nav-content sidebar-ul collapse {{ (Route::currentRouteName() == 'reports.order_history' || Route::currentRouteName() == 'reports.department_pending_orders' || $currentRouteName == 'reports.performance' || Route::currentRouteName() == 'reports.order_history_details' ||  Route::currentRouteName() == 'reports.typesofworks_pending') ? 'show':''}}" data-bs-parent="#sidebar-nav">
                     <li>
                         <a href="{{route('reports.order_history')}}" class="{{ (Route::currentRouteName() == 'reports.order_history' || Route::currentRouteName() == 'reports.order_history_details') ? 'active': '' }}">
                             <i class="bi bi-circle {{Route::currentRouteName() == 'reports.order_history' ? 'bi bi-circle-fill' : 'bi bi-circle'}}"></i><span>Order History
@@ -63,7 +63,7 @@ $taskmanage_permission =  Spatie\Permission\Models\Permission::where('name', 'ta
                     </li>
 
                     <li>
-                        <a href="{{ route('reports.typesofworks_pending') }}" class="{{Route::currentRouteName() == 'reports.typesofworks_pending' ? 'active-link':''}}">
+                        <a href="{{ route('reports.typesofworks_pending') }}" class="{{ Route::currentRouteName() == 'reports.typesofworks_pending' ? 'active':''}}">
                             <i class="bi bi-circle {{Route::currentRouteName() == 'reports.typesofworks_pending' ? 'bi bi-circle-fill' : 'bi bi-circle'}}"></i><span>Types Of Works Pending
                             </span>
                         </a>
