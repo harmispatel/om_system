@@ -10,7 +10,7 @@ use App\Models\orderimage;
 use App\Models\hadleby;
 use App\Models\customer_name;
 use DataTables;
-use App\Models\{Order_history, Reason, Task_manage};
+use App\Models\Order_history;
 use App\Models\types_work;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Http\Request;
@@ -310,6 +310,7 @@ class OrderController extends Controller
 
            $request->validate([
                 'counter_id' => 'required',
+                'orderno' => 'required',
                 'name' => 'required',
                 'mobile' => 'required|digits:10',
                 'SelectOrder' => 'required',
@@ -434,7 +435,7 @@ class OrderController extends Controller
         $typesofworkId = types_work::where('id',$orderdetail->counter_id)->first();
 
         $userdetail = Auth::guard('admin')->user();
-        $reasons = Reason::where('department',$userdetail->user_type)->get();
+
         try{
 
             $userId = Auth::guard('admin')->user()->id;
@@ -471,9 +472,22 @@ class OrderController extends Controller
           dd($th->getMessage());
         }
 
-        return view('admin.orders.orderDetail',compact('orderdetail','orderimages','typesofworkId','reasons'));
+        return view('admin.orders.orderDetail',compact('orderdetail','orderimages','typesofworkId'));
 
     }
+
+    // public function retrive($id)
+    // {
+
+    //     $orderdetail = order::where('orderno',$id)->first();
+
+    //     $orderimages = orderimage::where('order_id',$orderdetail->id)->get();
+
+
+
+    //     return view('admin.orders.orderDetail',compact(['orderdetail','orderimages','typesofworkId']));
+
+    // }
 
     /**
      * Show the form for editing the specified resource.
@@ -546,120 +560,12 @@ class OrderController extends Controller
         $orderimages = orderimage::where('order_id',$orderdetail->id)->get();
 
         $typesofworkId = types_work::where('id',$orderdetail->counter_id)->first();
-        $reasons = Reason::where('department',Auth::guard('admin')->user()->user_type)->get();
 
 
-        return view('admin.orders.orderDetail',compact('orderdetail','orderimages','typesofworkId','reasons'));
+
+        return view('admin.orders.orderDetail',compact('orderdetail','orderimages','typesofworkId'));
     }
 
-
-    //check for delay time in issue
-    private function checkDelay($order_id, $userType, $issue_switch) {
-
-        // Fetch the receive time and other relevant data for the given order_id and userType
-        $getOrderhistory = Order_history::with('receivePermission', 'issuePermission' , 'department')
-                            ->where('order_id', $order_id)->where('user_type', $userType)->first();
-
-        $out_switch_id = $issue_switch;
-        $taskdetails = Task_manage::where('types_of_works', $getOrderhistory->typesofwork_id)
-                            ->where('task1_id',$getOrderhistory->receive_switch)
-                            ->where('task2_id', $out_switch_id)->first();
-
-        $switch_in_date_time = isset($getOrderhistory->receive_time) ? Carbon::parse($getOrderhistory->receive_time) : null;
-
-        $working_hours = (isset($taskdetails['working_hours'])) ? $taskdetails['working_hours'] : 00;
-        $working_minutes = (isset($taskdetails['working_minutes'])) ? $taskdetails['working_minutes'] : 00;
-        $working_seconds = (isset($taskdetails['working_seconds'])) ? $taskdetails['working_seconds'] : 00;
-        $timeFormatted = sprintf(
-            "%02d:%02d:%02d",
-            $working_hours,
-            $working_minutes,
-            $working_seconds
-        );
-
-        // // Convert the string to a Carbon instance
-        $carbonDate = Carbon::parse($switch_in_date_time);
-        $currentDateTime = Carbon::now();
-        $diffrenceOfSwitches = $currentDateTime->diff($carbonDate);
-
-        // Check if the current date and time is after the specified date and time
-        $diffrenceOfSwitches = $diffrenceOfSwitches->format('%H:%i:%s');
-        $diffrenceOfSwitches = strtotime($diffrenceOfSwitches);
-        $timeFormatted = strtotime($timeFormatted);
-
-        if ($diffrenceOfSwitches > $timeFormatted) {
-
-            return [
-                        'delay' => true,
-                        'reason' => 'You are late in issuing the item.'
-                    ];
-        } else {
-
-            return ['delay' => false];
-        }
-
-        return ['delay' => false];
-
-    }
-
-    public function lateIssue(Request $request){
-
-        $request->validate([
-            'switch1' => 'required',
-            'order_id' => 'required',
-            'department_id' => 'required',
-            'permission_id' => 'required',
-
-        ]);
-
-       try{
-
-        $order_id = $request->order_id;
-        $departmentId = $request->department_id;
-        $getPermissionId = $request->permission_id;
-        $reason = $request->switch1;
-        $orderdetail = order::where('id',$order_id)->first();
-
-        $orderdetail->order_status = $departmentId;
-        $orderdetail->save();
-
-        $order_id = $orderdetail->id;
-        $userType = Auth::guard('admin')->user()->user_type;
-        $workId = $orderdetail->counter_id;
-        $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
-
-
-        if(empty($getOrderhistory)){
-
-          $createNewOrderhistory = Order_history::create([
-             'user_id' =>  Auth::guard('admin')->user()->id,
-             'order_id' => $order_id ,
-             'user_type' => $userType,
-             'typesofwork_id' => $workId,
-             'switch_type' =>  $getPermissionId,
-             'issue_time' => Carbon::now(),
-             'reason_for_late' => $reason,
-          ]);
-
-        }else{
-
-             $update = Order_history::find($getOrderhistory->id);
-             $update->issue_time = Carbon::now();
-             $update->switch_type = $getPermissionId;
-             $update->reason_for_late = $reason;
-             $update->save();
-
-        }
-
-        return redirect()->back()->with('success','Issue Successfully With Your Reason For Late..');
-
-    }catch(\Throwable $th){
-          return redirect()->back()->with('error','Internal Server Error!');
-       }
-
-
-
-    }
     //for issue to design
     public function issueToDesign($id){
 
@@ -667,31 +573,16 @@ class OrderController extends Controller
         try{
             $orderdetail = order::where('orderno',$id)->first();
             $getDesignRole = Role::where('name','DESIGN/CAM')->first();
-            $getPermissionId = Permission::where('name','iss.for.des/cam')->first();
 
             if(isset($orderdetail)){
 
-                $delayCheck = $this->checkDelay($orderdetail->id, Auth::guard('admin')->user()->user_type,$getPermissionId->id);
-
-
-                if ($delayCheck['delay'] == 'true') {
-                    session([
-                        'getPermissionId' => $getPermissionId,
-                         'orderDetail' => $orderdetail,
-                         'getDepartment' => $getDesignRole,
-
-                    ]);
-                    return redirect()->back()->with('massage', $delayCheck['reason']);
-                }
-
                 $orderdetail->order_status = $getDesignRole->id;
                 $orderdetail->save();
-
                 $order_id = $orderdetail->id;
                 $userType = Auth::guard('admin')->user()->user_type;
                 $workId = $orderdetail->counter_id;
                 $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
-
+                $getPermissionId = Permission::where('name','iss.for.des/cam')->first();
 
                 if(empty($getOrderhistory)){
 
@@ -706,11 +597,20 @@ class OrderController extends Controller
 
                 }else{
 
-                     $update = Order_history::find($getOrderhistory->id);
-                     $update->issue_time = Carbon::now();
-                     $update->switch_type = $getPermissionId->id;
-                     $update->save();
+                        $update = Order_history::find($getOrderhistory->id);
+                        $update->issue_time = Carbon::now();
+                        $update->switch_type = $getPermissionId->id;
+                        $update->save();
+                    // foreach($getOrderhistory as $value){
+                    //     if($value->user_type == $userType){
 
+                    //        $value->update([
+                    //            'issue_time'=> Carbon::now(),
+                    //            'switch_type' =>  $getPermissionId->id,
+                    //            ]);
+                    //        $value->save();
+                    //     }
+                    //  }
                 }
 
                 return redirect()->back()->with('success','Issue To Design Department Successfully..');
@@ -726,26 +626,15 @@ class OrderController extends Controller
         try{
             $orderdetail = order::where('orderno',$id)->first();
             $getWaxingRole = Role::where('name','WAXING')->first();
-            $getPermissionId = Permission::where('name','qc&iss.for.waxing')->first();//
 
             if(isset($orderdetail)){
-
-                $delayCheck = $this->checkDelay($orderdetail->id, Auth::guard('admin')->user()->user_type, $getPermissionId->id);
-
-                if ($delayCheck['delay'] == 'true') {
-                    session([
-                        'getPermissionId' => $getPermissionId,
-                         'orderDetail' => $orderdetail,
-                         'getDepartment' => $getWaxingRole,
-
-                    ]);
-                    return redirect()->back()->with('massage', $delayCheck['reason']);
-                }
 
                 $order_id = $orderdetail->id;
                 $userType = Auth::guard('admin')->user()->user_type;
                 $workId = $orderdetail->counter_id;
                 $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
+
+                $getPermissionId = Permission::where('name','qc&iss.for.waxing')->first();//
 
 
                 if(empty($getOrderhistory)){
@@ -847,26 +736,14 @@ class OrderController extends Controller
         try{
             $orderdetail = order::where('orderno',$id)->first();
             $getWaxingRole = Role::where('name','CASTING')->first();//
-            $getPermissionId = Permission::where('name','qc&iss.for.casting')->first();//
 
             if(isset($orderdetail)){
 
-                $delayCheck = $this->checkDelay($orderdetail->id, Auth::guard('admin')->user()->user_type,$getPermissionId->id);
-
-                if ($delayCheck['delay'] == 'true') {
-                    session([
-                        'getPermissionId' => $getPermissionId,
-                         'orderDetail' => $orderdetail,
-                         'getDepartment' => $getWaxingRole,
-
-                    ]);
-                    return redirect()->back()->with('massage', $delayCheck['reason']);
-                }
                 $order_id = $orderdetail->id;
                 $userType = Auth::guard('admin')->user()->user_type;
                 $workId = $orderdetail->counter_id;
                 $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
-
+                $getPermissionId = Permission::where('name','qc&iss.for.casting')->first();//
 
                 if(empty($getOrderhistory)){
 
@@ -937,26 +814,14 @@ class OrderController extends Controller
         try{
             $orderdetail = order::where('orderno',$id)->first();
             $getWaxingRole = Role::where('name','DELIVERY')->first();//
-            $getPermissionId = Permission::where('name','iss.for.delivery')->first();//
 
             if(isset($orderdetail)){
 
-                $delayCheck = $this->checkDelay($orderdetail->id, Auth::guard('admin')->user()->user_type,$getPermissionId->id);
-
-                if ($delayCheck['delay'] == 'true') {
-                    session([
-                        'getPermissionId' => $getPermissionId,
-                         'orderDetail' => $orderdetail,
-                         'getDepartment' => $getWaxingRole,
-
-                    ]);
-                    return redirect()->back()->with('massage', $delayCheck['reason']);
-                }
                 $order_id = $orderdetail->id;
                 $userType = Auth::guard('admin')->user()->user_type;
                 $workId = $orderdetail->counter_id;
                 $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
-
+                $getPermissionId = Permission::where('name','iss.for.delivery')->first();//
 
                 if(empty($getOrderhistory)){
 
@@ -1026,26 +891,14 @@ class OrderController extends Controller
         try{
             $orderdetail = order::where('orderno',$id)->first();
             $getWaxingRole = Role::where('name','HISAB')->first();//
-            $getPermissionId = Permission::where('name','iss.for.hisab')->first();//
 
             if(isset($orderdetail)){
 
-                $delayCheck = $this->checkDelay($orderdetail->id, Auth::guard('admin')->user()->user_type,$getPermissionId->id);
-
-                if ($delayCheck['delay'] == 'true') {
-                    session([
-                        'getPermissionId' => $getPermissionId,
-                         'orderDetail' => $orderdetail,
-                         'getDepartment' => $getWaxingRole,
-
-                    ]);
-                    return redirect()->back()->with('massage', $delayCheck['reason']);
-                }
                 $order_id = $orderdetail->id;
                 $userType = Auth::guard('admin')->user()->user_type;
                 $workId = $orderdetail->counter_id;
                 $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
-
+                $getPermissionId = Permission::where('name','iss.for.hisab')->first();//
 
                 if(empty($getOrderhistory)){
 
@@ -1116,27 +969,14 @@ class OrderController extends Controller
         try{
             $orderdetail = order::where('orderno',$id)->first();
             $getWaxingRole = Role::where('name','CENTRAL')->first();//
-            $getPermissionId = Permission::where('name','qc&iss.for.del/cen')->first();//
 
             if(isset($orderdetail)){
-
-                $delayCheck = $this->checkDelay($orderdetail->id, Auth::guard('admin')->user()->user_type,$getPermissionId->id);
-
-                if ($delayCheck['delay'] == 'true') {
-                    session([
-                        'getPermissionId' => $getPermissionId,
-                         'orderDetail' => $orderdetail,
-                         'getDepartment' => $getWaxingRole,
-
-                    ]);
-                    return redirect()->back()->with('massage', $delayCheck['reason']);
-                }
 
                 $order_id = $orderdetail->id;
                 $userType = Auth::guard('admin')->user()->user_type;
                 $workId = $orderdetail->counter_id;
                 $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
-
+                $getPermissionId = Permission::where('name','qc&iss.for.del/cen')->first();//
 
                 if(empty($getOrderhistory)){
 
@@ -1205,26 +1045,14 @@ class OrderController extends Controller
         try{
             $orderdetail = order::where('orderno',$id)->first();
             $getWaxingRole = Role::where('name','READY')->first();//
-            $getPermissionId = Permission::where('name','iss.for.ready')->first();//
 
             if(isset($orderdetail)){
 
-                $delayCheck = $this->checkDelay($orderdetail->id, Auth::guard('admin')->user()->user_type,$getPermissionId->id);
-
-                if ($delayCheck['delay'] == 'true') {
-                    session([
-                        'getPermissionId' => $getPermissionId,
-                         'orderDetail' => $orderdetail,
-                         'getDepartment' => $getWaxingRole,
-
-                    ]);
-                    return redirect()->back()->with('massage', $delayCheck['reason']);
-                }
                 $order_id = $orderdetail->id;
                 $userType = Auth::guard('admin')->user()->user_type;
                 $workId = $orderdetail->counter_id;
                 $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
-
+                $getPermissionId = Permission::where('name','iss.for.ready')->first();//
 
                 if(empty($getOrderhistory)){
 
@@ -1296,26 +1124,14 @@ class OrderController extends Controller
         try{
             $orderdetail = order::where('orderno',$id)->first();
             $getWaxingRole = Role::where('name','PACKING')->first();//
-            $getPermissionId = Permission::where('name','iss.for.packing')->first();//
 
             if(isset($orderdetail)){
 
-                $delayCheck = $this->checkDelay($orderdetail->id, Auth::guard('admin')->user()->user_type,$getPermissionId->id);
-
-                if ($delayCheck['delay'] == 'true') {
-                    session([
-                        'getPermissionId' => $getPermissionId,
-                         'orderDetail' => $orderdetail,
-                         'getDepartment' => $getWaxingRole,
-
-                    ]);
-                    return redirect()->back()->with('massage', $delayCheck['reason']);
-                }
                 $order_id = $orderdetail->id;
                 $userType = Auth::guard('admin')->user()->user_type;
                 $workId = $orderdetail->counter_id;
                 $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
-
+                $getPermissionId = Permission::where('name','iss.for.packing')->first();//
 
                 if(!$getOrderhistory){
 
@@ -1420,25 +1236,13 @@ class OrderController extends Controller
     public function issueForSaleing($id){
         try{
             $orderdetail = order::where('orderno',$id)->first();
-            $getPermissionId = Permission::where('name','iss.for.saleing')->first();//
             if(isset($orderdetail)){
 
-                // $delayCheck = $this->checkDelay($orderdetail->id, Auth::guard('admin')->user()->user_type,$getPermissionId->id);
-
-                // if ($delayCheck['delay'] == 'true') {
-                //     session([
-                //         'getPermissionId' => $getPermissionId,
-                //          'orderDetail' => $orderdetail,
-                //          'getDepartment' => $getWaxingRole,
-
-                //     ]);
-                //     return redirect()->back()->with('massage', $delayCheck['reason']);
-                // }
                 $order_id = $orderdetail->id;
                 $userType = Auth::guard('admin')->user()->user_type;
                 $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
 
-
+                $getPermissionId = Permission::where('name','iss.for.saleing')->first();//
 
 
                         $getReceiveTime = isset($getOrderhistory->receive_time) ? Carbon::parse($getOrderhistory->receive_time) : null;

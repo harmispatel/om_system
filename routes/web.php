@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{AuthController,DashboardController,GeneralSettingController, RoleController, AdminController, OrderController, ReportController,QrCodeController,DompdfController, TaskManageController,types_workController};
+use App\Http\Controllers\{AuthController,DashboardController,GeneralSettingController, RoleController, AdminController, OrderController, ReportController,QrCodeController,DompdfController, ReasonController, TaskManageController,types_workController};
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -96,6 +96,7 @@ Route::group(['prefix' => 'admin'], function ()
         Route::post('departments/destroy',[RoleController::class,'destroy'])->name('roles.destroy');
 
         // Orders
+
         Route::get('orders', [OrderController::class,'index'])->name('order');
         Route::get('orders/create', [OrderController::class,'create'])->name('orders.create');
         Route::post('orders/store', [OrderController::class,'store'])->name('orders.store');
@@ -120,7 +121,7 @@ Route::group(['prefix' => 'admin'], function ()
         route::get('/orders/receive/packing/{id}',[OrderController::class,'receiveForPacking'])->name('orders.rec.packing');
         route::get('/orders/complete/delivery/{id}',[OrderController::class,'completeDelivery'])->name('orders.delivery');
         route::get('/orders/issue/saleing/{id}',[OrderController::class,'issueForSaleing'])->name('orders.iss.saleing');
-
+        route::post('/orders/issue/late',[OrderController::class,'lateIssue'])->name('late-issue');
         //getdata
         Route::post('/get-data',[OrderController::class,'getData'])->name('getdata');
         Route::get('/fetch-data',[OrderController::class,'fetchdata'])->name('fetchdata');
@@ -150,7 +151,11 @@ Route::group(['prefix' => 'admin'], function ()
         Route::get('edit/types_of_work/{id}',[types_workController::class,'edit'])->name('edit.types_work');
         Route::post('update/types_of_work',[types_workController::class,'update'])->name('update.types_work');
 
+        //delayTime reasons
 
+        Route::get('/reasons',[ReasonController::class,'index'])->name('reasons');
+        Route::get('/reasons/create',[ReasonController::class,'create'])->name('reasons.create');
+        Route::post('/reasons/store',[ReasonController::class,'store'])->name('reasons.store');
 
     });
 });

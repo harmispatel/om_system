@@ -74,6 +74,7 @@
                                 <tr>
                                     <th>Serial No</th>
                                     <th>Order No</th>
+                                    <th>Customer Contact-No</th>
                                     <th>SwitchIn Date/Name</th>
                                     <th>SwitchOut Time/Name</th>
                                     <th>Duration</th>
@@ -97,7 +98,6 @@
 $(function() {
 
     var table = $('#PerformanceTable').DataTable({
-        searching:false,
         paging:false,
         processing: true,
         serverSide: true,
@@ -117,6 +117,10 @@ $(function() {
             {
                 data: 'order_no',
                 name: 'order_no'
+            },
+            {
+                data: 'mobile_no',
+                name: 'mobile_no'
             },
             {
                 data: 'inswitch_time',

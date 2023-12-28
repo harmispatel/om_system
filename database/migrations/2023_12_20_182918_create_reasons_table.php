@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateGeneralSettingsTable extends Migration
+class CreateReasonsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,12 +13,10 @@ class CreateGeneralSettingsTable extends Migration
      */
     public function up()
     {
-        Schema::create('general_settings', function (Blueprint $table) {
+        Schema::create('reasons', function (Blueprint $table) {
             $table->id();
-            $table->string('Days')->nullable();
-            $table->string('holiday')->nullable();
-            $table->time('StartTime')->nullable();
-            $table->time('EndTime')->nullable();         
+            $table->integer('user_type')->nullable();
+            $table->longText('reason')->nullable();
             $table->timestamps();
         });
     }
@@ -30,6 +28,6 @@ class CreateGeneralSettingsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('general_settings');
+        Schema::dropIfExists('reasons');
     }
 }

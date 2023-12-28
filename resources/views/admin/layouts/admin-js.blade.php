@@ -25,10 +25,12 @@
 <!-- Template Main JS File -->
 <script src="{{ asset('public/assets/js/main.js') }}"></script>
 
+
 <!-- Select 2 JS -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 {{-- <script src="//cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script> --}}
+
 
 {{-- Common Script --}}
 <script type="text/javascript">

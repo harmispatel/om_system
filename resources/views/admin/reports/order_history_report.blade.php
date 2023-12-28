@@ -45,6 +45,7 @@
                                 <thead>
                                     <tr>
                                         <th>Order No.</th>
+                                        <th>Customer Contact-No</th>
                                         <th style="width: 25%">Customer</th>
                                         <th>Current Department</th>
                                         <th style="width: 15%">Duration</th>
@@ -72,7 +73,7 @@
             var table = $('#OrderHistoryReportTable').DataTable({
                 lengthChange: false,
                 paging:true,
-                searching: false,
+                // searching: false,
                 processing: true,
                 serverSide: true,
                 pageLength: 25,
@@ -88,28 +89,24 @@
                         name: 'orderno'
                     },
                     {
+                        data: 'mobile',
+                        name: 'mobile'
+                    },
+                    {
                         data: 'name',
                         name: 'name',
-                        orderable: false,
-                        searchable: false
                     },
                     {
                         data: 'current_department',
                         name: 'current_department',
-                        orderable: false,
-                        searchable: false
                     },
                     {
                         data: 'duration',
                         name: 'duration',
-                        orderable: false,
-                        searchable: false
                     },
                     {
                         data: 'handleby',
                         name: 'handleby',
-                        orderable: false,
-                        searchable: false
                     },
                     {
                         data: 'actions',

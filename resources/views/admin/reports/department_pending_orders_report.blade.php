@@ -57,6 +57,7 @@
                                         <!--<th>Serial No</th>-->
                                         <th>Order No</th>
                                         <th>Customer Name</th>
+                                        <th>Customer Contact-No</th>
                                         <th>User Name</th>
                                         <th>Switch IN & Time</th>
                                         <th style="width: 20%;">Remainig Time</th>
@@ -81,7 +82,6 @@
 
             var table = $('#OrderHistoryTable').DataTable({
                 lengthChange: false,
-                searching: false,
                 processing: true,
                 serverSide: true,
                 pageLength: 100,
@@ -105,6 +105,10 @@
                     {
                         data:'customer_name',
                         name:'customer_name'
+                    },
+                    {
+                        data:'mobile_no',
+                        name:'mobile_no'
                     },
                     {
                         data: 'user_name',

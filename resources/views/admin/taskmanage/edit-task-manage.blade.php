@@ -35,7 +35,7 @@
                            <div class="col-md-12">
                             {{-- <div class="col-md-6 mb-3">
                                 <div class="form-group">
-                                   
+
                                     <label for="types_of_works" class="form-label">Types Of Work<span
                                             class="text-danger">*</span></label>
                                     <select type="text" name="types_of_works" id="select-box"
@@ -75,7 +75,7 @@
                                                 <label>
                                                     <input type="checkbox" name="task1_id" value="{{ $value->id }}"
                                                         class="mr-3 {{ $errors->has('task1_id') ? 'is-invalid' : '' }}" onclick="handleCheckbox1(this)">
-                                                        
+
                                                     @if($value->name == 'new_order')
                                                     New Order
                                                     @elseif($value->name == 'repeat_order')
@@ -149,7 +149,7 @@
                                                         <label>
                                                             <input type="checkbox" name="task2_id" value="{{ $value->id }}"
                                                                 class="mr-3 {{ $errors->has('task2_id') ? 'is-invalid' : '' }}" onclick="handleCheckbox2(this)">
-                                                                
+
                                                                 @if($value->name == 'new_order')
                                                             New Order
                                                             @elseif($value->name == 'repeat_order')
@@ -204,7 +204,7 @@
                                     @endif
                                     </div>
                                 </div> --}}
-                            </div>   
+                            </div>
 
                             <div class="row mt-2">
                                 <h3>Working Time<span class="text-danger">*</span></h3>
@@ -215,30 +215,30 @@
                                     <input
                                         class="form-control-sm border border-dark {{ $errors->has('working_hours') ? 'is-invalid' : '' }}"
                                         type="number" name="working_hours" min="00" max="200" value="{{$taskManage->working_hours}}">
-                                
-                                </div> 
+
+                                </div>
                                 <div class="col-md-1 form-group">
 
                                     <input
                                         class="form-control-sm border border-dark {{ $errors->has('working_minutes') ? 'is-invalid' : '' }}"
                                         type="number" name="working_minutes" min="00" max="59" value="{{$taskManage->working_minutes}}">
-                                  
-                                </div>   
-                                <div class="col-md-1 form-group"> 
+
+                                </div>
+                                <div class="col-md-1 form-group">
                                     <input
                                         class="form-control-sm border border-dark "
                                         type="number" name="working_seconds" value="00" min="00" max="59" value="{{$taskManage->working_seconds}}">
-                                </div>        
+                                </div>
                                     @if ($errors->has('working_hours') || $errors->has('working_minutes'))
                                         <div class="invalid-feedback">
                                             {{ $errors->first('working_hours', 'Working Time Field is Required'),
                                                 $errors->first('working_minutes', 'Working Time Field is Required'),
-                                                 }}                                 
+                                                 }}
                                         </div>
                                     @endif
 
-                            </div>                  
-                            
+                            </div>
+
                         </div>
                         <div class="card-footer text-center mt-5">
                             <button class="btn form_button">{{ __('Save') }}</button>
@@ -277,10 +277,10 @@ function handleCheckbox2(checkbox) {
         @if(Session::has('success'))
         toastr.success('{{ Session::get('success') }}')
         @endif
-        
+
         @if (Session::has('error'))
             toastr.error('{{ Session::get('error') }}')
         @endif
 </script>
 
-@endsection        
+@endsection

@@ -125,6 +125,12 @@ $taskmanage_permission =  Spatie\Permission\Models\Permission::where('name', 'ta
                     <span>General Setting</span>
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link {{ $currentRouteName == 'reasons' ? '' : 'collapsed' }}" href="{{route('reasons')}}">
+                    <i class="fa-solid fa-business-time"></i>
+                    <span>Reasons Of Delay-Time</span>
+                </a>
+            </li>
         @endif
 
     </ul>

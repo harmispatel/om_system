@@ -41,9 +41,11 @@
                                     <tr>
                                         <th>Order No</th>
                                         <th>Customer Name</th>
+                                        <th>Customer Contact-No</th>
                                         <th>User Name</th>
                                         <th>Switch IN & Time</th>
                                         <th style="width: 20%;">Remainig Time</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody></tbody>
@@ -64,7 +66,7 @@
 
             var table = $('#TypesofWorksPendingReport').DataTable({
                 lengthChange: false,
-                searching: false,
+                // searching: false,
                 processing: true,
                 serverSide: true,
                 pageLength: 100,
@@ -84,6 +86,10 @@
                         name:'customer_name'
                     },
                     {
+                        data:'mobile_no',
+                        name:'mobile_no'
+                    },
+                    {
                         data: 'user_name',
                         name: 'user_name'
                     },
@@ -94,6 +100,10 @@
                     {
                         data: 'remainig_time',
                         name: 'remainig_time'
+                    },
+                    {
+                        data: 'actions',
+                        name: 'actions'
                     },
                 ]
             });

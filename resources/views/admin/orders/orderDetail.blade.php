@@ -1,11 +1,11 @@
 @php
-   
-  
+
+
    $counterId= $orderdetail->counter_id;
    $counterRole = App\Models\Role::first();
    $counterName = App\Models\Role::where('id', $counterId )->first();
    $user_dt = Auth::guard('admin')->user();
-    $role_id = $user_dt->user_type; 
+    $role_id = $user_dt->user_type;
     $permissions = App\Models\RoleHasPermissions::where('role_id', $role_id)->pluck('permission_id');
 
     foreach ($permissions as $permission) {
@@ -41,6 +41,13 @@
         }
     }
     $getReceiveDate = isset($oneRecordDate) ? $oneRecordDate : '';
+    $getPermissionIdValue = session('getPermissionId', null);
+    $getOrderDetail = session('orderDetail',null);
+    $orderId = $getOrderDetail ? $getOrderDetail->id:'';
+    $getDepartmentDetail = session('getDepartment',null);
+    $departmentId = $getDepartmentDetail ? $getDepartmentDetail->id : '';
+    $issueSwitch = $getPermissionIdValue ? $getPermissionIdValue->name : '';
+    $issueSwitchId = $getPermissionIdValue ? $getPermissionIdValue->id : '';
 
 @endphp
 @extends('admin.layouts.admin-layout')
@@ -48,6 +55,57 @@
 @section('title', 'Order-Detail')
 
 @section('content')
+
+<!-- bootstrap 5.2 model -->
+<div class="modal" tabindex="-1" id="mymodel">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><span style="color:red;">Why Getting Late Issue ?</span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form action="{{route('late-issue')}}" method="POST" id="lateIssueForm">
+            @csrf
+            <div class="col-md-12 mb-3">
+                    <div class="form-label">Issue Switch : {{$issueSwitch}}
+                        <input type="hidden" name="permission_id" value="{{$issueSwitchId}}">
+                        <input type="hidden" name="order_id" value="{{ $orderId }}">
+                        <input type="hidden" name="department_id" value="{{$departmentId}}">
+                    </div>
+                    <label class="form-label">Reasons <span class="text-danger">*</span></label><br>
+                    <div style="border: 1px solid {{ ($errors->has('switch1')) ? 'red' : '#ced4da' }}; padding: 10px; border-radius: 0.375rem">
+                        @if (count($reasons) > 0)
+                            @foreach ($reasons as $switch)
+                                <div class="mb-1">
+                                    <input type="radio" name="switch1" id="switch1_{{ $switch['id'] }}" {{ (old('switch1') == $switch['id']) ? 'checked' : '' }} value="{{ $switch['reason'] }}"> <label for="switch1_{{ $switch['id'] }}" style="cursor: pointer; font-weight:700; font-size:15px;">{{ $switch['reason'] }}</label>
+                                </div> <hr style="margin: 0.5rem 0">
+                            @endforeach
+                            <div class="mb-1">
+                                <input type="radio" name="switch1" id="switch1_other" value="other">
+                                <label for="switch1_other" style="cursor: pointer; font-weight:700; font-size:15px;">Other</label>
+                                <div id="otherReasonContainer" style="display:none;">
+                                    <input type="text" name="switch1" class="form-control" id="otherReasonInput" placeholder="Enter your reason">
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                    @if ($errors->has('switch1'))
+                        <div class="text-danger" style="margin-top: 0.25rem;">
+                            {{ $errors->first('switch1') }}
+                        </div>
+                    @endif
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button id="submitIssue"type="submit" class="btn btn-warning">Issue</button>
+            </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 
 
 <!-- <span class="text-start"><a href="{{ route('order') }}" class="btn btn-sm btn-primary">Back</a></span> -->
@@ -59,20 +117,20 @@
         <div class="col-md-12">
             <div class="card m-2 p-2">
                 <div class="">
-                    
+
                         @if($user_dt->user_type == $orderdetail->order_status)
-                        
+
                             @if(in_array($counter_permission->id,$permission_ids))
                                 <a href="{{route('orders.create')}}" class="btn btn-outline-info text-dark" title="New Order">New Order</a>
                             @endif
-                          
+
                             @if(in_array($design_permission->id,$permission_ids))
-                                <a href="{{route('orders.issue.design',$orderdetail->orderno) }}" class="btn btn-outline-info text-dark" title="Issue To Design">Issue To Design</a>
+                                <a href="{{route('orders.issue.design',$orderdetail->orderno) }}" class="btn btn-outline-info text-dark issue" title="Issue To Design">Issue To Design</a>
                             @endif
-                           
-                           
+
+
                             @if(empty($getReceiveDate))
-                            
+
                                 @if(in_array($design1_permission->id,$permission_ids) )
                                     <a href="{{route('orders.rec.design',$orderdetail->orderno) }}" class="btn btn-outline-info text-dark" title="Receive For Design">Receive For Design</a>
                                 @endif
@@ -84,7 +142,7 @@
 
                             @if($getReceiveDate != null || $role_id == 2 || $role_id == 1)
                                 @if(in_array($waxing_permission->id,$permission_ids))
-                                    <a href="{{route('orders.issue.waxing', $orderdetail->orderno)}}" class="btn btn-outline-info text-dark" title="Issue To Waxing">Issue To Waxing</a>
+                                    <a href="{{route('orders.issue.waxing', $orderdetail->orderno)}}" class="btn btn-outline-info text-dark issue" title="Issue To Waxing">Issue To Waxing</a>
                                 @endif
                             @else
                                 @if(in_array($waxing_permission->id,$permission_ids))
@@ -104,7 +162,7 @@
 
                             @if($getReceiveDate != null)
                                 @if(in_array($casting_permission->id,$permission_ids))
-                                <a href="{{route('orders.iss.casting', $orderdetail->orderno)}}" class="btn btn-outline-info text-dark" title="Issue To Casting">Issue To Casting</a>
+                                <a href="{{route('orders.iss.casting', $orderdetail->orderno)}}" class="btn btn-outline-info text-dark issue" title="Issue To Casting">Issue To Casting</a>
                                 @endif
                             @else
                                 @if(in_array($casting_permission->id,$permission_ids))
@@ -124,7 +182,7 @@
 
                             @if($getReceiveDate != null)
                                 @if(in_array($hisab_permission->id,$permission_ids))
-                                    <a href="{{route('orders.iss.hisab', $orderdetail->orderno)}}" class="btn btn-outline-info text-dark" title="Issue To Hisab">Issue To Hisab</a>
+                                    <a href="{{route('orders.iss.hisab', $orderdetail->orderno)}}" class="btn btn-outline-info text-dark issue" title="Issue To Hisab">Issue To Hisab</a>
                                 @endif
                             @else
                                 @if(in_array($hisab_permission->id,$permission_ids))
@@ -144,7 +202,7 @@
 
                             @if($getReceiveDate != null)
                                 @if(in_array($central_permission->id,$permission_ids))
-                                    <a href="{{route('orders.iss.central', $orderdetail->orderno)}}" class="btn btn-outline-info text-dark" title="Repeat Order">Issue To Central</a>
+                                    <a href="{{route('orders.iss.central', $orderdetail->orderno)}}" class="btn btn-outline-info text-dark issue" title="Repeat Order">Issue To Central</a>
                                 @endif
                             @else
                                 @if(in_array($central_permission->id,$permission_ids))
@@ -164,7 +222,7 @@
 
                             @if($getReceiveDate != null)
                                 @if(in_array($issReady_permission->id,$permission_ids))
-                                    <a href="{{route('orders.iss.ready', $orderdetail->orderno)}}" class="btn btn-outline-info text-dark" title="Repeat Order">Issue To Ready</a>
+                                    <a href="{{route('orders.iss.ready', $orderdetail->orderno)}}" class="btn btn-outline-info text-dark issue" title="Repeat Order">Issue To Ready</a>
                                 @endif
                             @else
                                 @if(in_array($issReady_permission->id,$permission_ids))
@@ -204,7 +262,7 @@
 
                             @if($getReceiveDate != null)
                                 @if(in_array($delivery_permission->id,$permission_ids))
-                                    <a href="{{route('orders.iss.delivery', $orderdetail->orderno)}}" class="btn btn-outline-info text-dark" title="Repeat Order">Issue To Delivery</a>
+                                    <a href="{{route('orders.iss.delivery', $orderdetail->orderno)}}" class="btn btn-outline-info text-dark issue" title="Repeat Order">Issue To Delivery</a>
                                 @endif
                             @else
                                 @if(in_array($delivery_permission->id,$permission_ids))
@@ -224,7 +282,7 @@
 
                             @if($getReceiveDate != null)
                                 @if(in_array($saleing_permission->id,$permission_ids))
-                                    <a href="{{route('orders.iss.saleing', $orderdetail->orderno)}}" class="btn btn-outline-info text-dark" title="Repeat Order">Issue To Saleing</a>
+                                    <a href="{{route('orders.iss.saleing', $orderdetail->orderno)}}" class="btn btn-outline-info text-dark issue" title="Repeat Order">Issue To Saleing</a>
                                 @endif
                             @else
                                 @if(in_array($saleing_permission->id,$permission_ids))
@@ -234,7 +292,7 @@
 
                             @if($getReceiveDate != null)
                                 @if(in_array($packing_permission->id,$permission_ids))
-                                    <a href="{{route('orders.iss.packing', $orderdetail->orderno)}}" class="btn btn-outline-info text-dark" title="Repeat Order">Issue To Packing</a>
+                                    <a href="{{route('orders.iss.packing', $orderdetail->orderno)}}" class="btn btn-outline-info text-dark issue" title="Repeat Order">Issue To Packing</a>
                                 @endif
                             @else
                                 @if(in_array($packing_permission->id,$permission_ids))
@@ -246,7 +304,7 @@
                         @endif
                 </div>
 
-               
+
                 <div class="text-end m-2" >
 
 
@@ -255,21 +313,21 @@
                                 class="fa fa-print" aria-hidden="true"></i></a>
                         <button onClick="share()" class="btn btn-sm btn-primary rounded-circle" title="Share"><i
                                 class="fa fa-share-alt" aria-hidden="true"></i></button>
-                    @endif 
+                    @endif
 
                 </div>
-            
+
                 <div class="container border p-2" >
                     <!-- <h2 class="text-center"><span><img src="{{asset('public/images/demo_images/logos/logo.png')}}"
                                 height="50px" width="70px"></span></h2> -->
-                               
+
                     <div class="row">
-                       
+
                         <div class="">
                             <img alt="image"
                                  src="{{ asset('public/images/qrcodes/'. $orderdetail->Qrphoto)}}"
                              class="">
-                        </div> 
+                        </div>
                         <div class="col-lg-12 col-md-12 text-center">
                             <h5 class="card-title"> Customer Order </h5>
                         </div>
@@ -289,7 +347,7 @@
                                 </tr>
                                 <tr>
                                     <td>Counter Name</td>
-                                    
+
                                     <td> @if(isset($orderdetail->counter_id))
                                         {{$typesofworkId->types_of_works}}
                                         @else
@@ -317,16 +375,16 @@
                                     <td>Metal</td>
                                     <td>{{$orderdetail->metal}}</td>
                                 </tr>
-                                
+
                             </table>
                         </div>
-                  
-                           
+
+
 
 
                         <div class="col-lg-6">
                             <table class="table">
-                               
+
                                 <tr>
                                     <td>Touch</td>
                                     <td> {{   number_format($orderdetail->touch,2) }}</td>
@@ -406,7 +464,65 @@
 @section('page-js')
 
 <script type="text/javascript">
+$(document).ready(function() {
 
+    //form submit
+    // $("#lateIssueForm").submit(function(event) {
+    //     event.preventDefault(); // Prevent default form submission
+
+    //     // Capture selected reason
+    //     var selectedReason = $("input[name='switch1']").val();
+
+    //     var csrfToken = $('meta[name="csrf-token"]').attr('content');
+    //     // Send data to the server
+    //     $.ajax({
+    //         url: '{{route("late-issue")}}',
+    //         method: 'POST',
+    //         headers: {
+    //             'X-CSRF-TOKEN': csrfToken
+    //         },
+    //         data: {
+    //             reason: selectedReason,
+    //         },
+    //         success: function(response) {
+    //             if (!response.delay) {
+    //                 window.location.href = '/your-redirect-url';
+    //             } else {
+
+    //             }
+    //         }
+    //     });
+    // });
+    // Check if there's a message in the session
+    let errorMessage = "{{ session('massage') }}";
+    if (errorMessage) {
+        // Show the modal with the error message
+        $('#mymodel').modal('show');
+    }
+});
+
+$(document).ready(function() {
+    // Initially, disable the "Issue" button
+    $("#submitIssue").prop('disabled', true);
+
+    // Check if any radio button with the name 'switch1' is selected
+    $('input[name="switch1"]').on('change', function() {
+        if ($('input[name="switch1"]:checked').length > 0) {
+            // Enable the "Issue" button
+            $("#submitIssue").prop('disabled', false);
+
+              // If "Other" option is selected, show the input field
+              if ($('input[name="switch1"]:checked').val() === 'other') {
+                $("#otherReasonContainer").show();
+            } else {
+                $("#otherReasonContainer").hide();
+            }
+        } else {
+            // Disable the "Issue" button
+            $("#submitIssue").prop('disabled', true);
+        }
+    });
+});
 function share(){
         var currenturl = window.location.href;
         if(navigator.share){
@@ -421,7 +537,7 @@ function share(){
         }
     }
 
-   
+
     document.getElementById('printButton').addEventListener('click', function() {
             var printContent = document.getElementById('printableArea');
             var originalContents = document.body.innerHTML;
@@ -441,6 +557,8 @@ function share(){
             };
         });
 
+
+
 toastr.options = {
     "closeButton": true,
     "progressBar": true,
@@ -452,9 +570,9 @@ toastr.options = {
 toastr.success('{{ Session::get('success') }}')
 @endif
 
-@if (Session::has('error'))
-    toastr.error('{{ Session::get('error') }}')
-@endif
+// @if (Session::has('error'))
+//     toastr.error('{{ Session::get('error') }}')
+// @endif
 
 </script>
 

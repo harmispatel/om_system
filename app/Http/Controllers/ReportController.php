@@ -13,15 +13,20 @@ use App\Models\types_work;
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use DateInterval;
+use DatePeriod;
+use DateTime;
 use PhpParser\Node\Stmt\Return_;
 
 class ReportController extends Controller
 {
+
     // Function for Get Report for Order History
     public function orderHistoryReport(Request $request)
     {
         if ($request->ajax())
         {
+
             $order_no = $request->order_number;
             $orders = order::query();
 
@@ -31,7 +36,6 @@ class ReportController extends Controller
                 $orders = $orders->latest();
             }
             $orders = $orders->get();
-
 
             return DataTables::of($orders)
             ->addIndexColumn()
@@ -46,13 +50,15 @@ class ReportController extends Controller
                 }
             })
             ->addColumn('duration', function ($row){
-                if ($row->order_status == 11){
+                if ($row->order_status == 11 || $row->order_status == 12){
                     $permission = Permission::where('name', 'delivery/complete')->first();
+                    $permission2 =  Permission::where('name','iss.for.saleing')->first();
                     $order_histories = Order_history::where('order_id', $row->id)->get();
 
                     foreach($order_histories as $order_history){
                         //check in orderhistory records switch type = delivery
-                        if($order_history->switch_type == $permission->id){
+                        if($order_history->switch_type == $permission->id || $order_history->switch_type == $permission2->id){
+
                             $order_date = Carbon::parse($row->created_at);
                             $delivery_date = Carbon::parse($row->deliverydate);
                             $completed_date = Carbon::parse($order_history->issue_time);
@@ -91,6 +97,7 @@ class ReportController extends Controller
             ->addColumn('order_no', function ($row) {
                 return isset($row->order->orderno) ? $row->order->orderno : '';
             })
+
             ->addColumn('inswitch_time', function ($row) {
                 $receive_date = isset($row->receive_time) ? $row->receive_time : '';
                 if (!empty($receive_date) || $receive_date != '' || $receive_date != NULL) {
@@ -121,36 +128,148 @@ class ReportController extends Controller
                 $lastname = (isset($row['user']['lastname'])) ? $row['user']['lastname'] : '';
                 return $firstname." ".$lastname;
             })
+            // ->addColumn('duration', function ($row) {
+
+            //     $getOfficeTime = GeneralSetting::first();
+            //     $officeStartTime = Carbon::parse(isset($getOfficeTime->StartTime)?$getOfficeTime->StartTime:'11:00:00');
+            //     $officeEndTime = Carbon::parse(isset($getOfficeTime->EndTime)?$getOfficeTime->EndTime:'20:00:00');
+
+            //     $task_details = Task_manage::where('types_of_works', $row->typesofwork_id)
+            //     ->where('task1_id', $row->receive_switch)
+            //     ->where('task2_id', $row->switch_type)
+            //     ->first();
+
+            //     $taskHours = isset($task_details->working_hours) ? (int)$task_details->working_hours : 0;
+            //     $taskMinutes = isset($task_details->working_minutes) ? (int)$task_details->working_minutes : 0;
+            //     $taskSeconds = isset($task_details->working_seconds) ? (int)$task_details->working_seconds : 0;
+
+            //     $time = Carbon::createFromTime($taskHours, $taskMinutes, $taskSeconds);
+            //     $formattedTime = $time->format('H:i:s');
+
+            //     $startDateTime = Carbon::parse($row->receive_time);
+            //     $endDateTime = Carbon::parse($row->issue_time);
+
+            //     $difference = $endDateTime->diff($startDateTime)->format('%H:%i:%s');
+            //     $formattedTimeInSeconds = strtotime($formattedTime);
+            //     $differenceInSeconds = strtotime($difference);
+
+            //     if ($differenceInSeconds >= $formattedTimeInSeconds) {
+            //         // If true, return the difference time in red font
+            //         $diff = '<span style="color: red;">' . $endDateTime->diff($startDateTime)->format('%d days %h hours %i minute') . '</span>';
+            //     } else {
+            //         // If false, return the difference time in green font
+            //         $diff = '<span style="color: green;">' . $endDateTime->diff($startDateTime)->format('%d days %h hours %i minute') . '</span>';
+            //     }
+            //     return $diff;
+            // })
+            // ->addColumn('duration', function ($row) {
+
+            //     $getOfficeTime = GeneralSetting::first();
+            //     $officeStartTime = Carbon::parse(isset($getOfficeTime->StartTime)?$getOfficeTime->StartTime:'11:00:00');
+            //     $officeEndTime = Carbon::parse(isset($getOfficeTime->EndTime)?$getOfficeTime->EndTime:'20:00:00');
+            //     $officeDuration = $officeEndTime->diff($officeStartTime)->format('%H:%i:%s');
+
+            //     $officeDurationInSeconds = strtotime($officeDuration);
+            //     $task_details = Task_manage::where('types_of_works', $row->typesofwork_id)
+            //         ->where('task1_id', $row->receive_switch)
+            //         ->where('task2_id', $row->switch_type)
+            //         ->first();
+
+            //     $taskHours = isset($task_details->working_hours) ? (int) $task_details->working_hours : 0;
+            //     $taskMinutes = isset($task_details->working_minutes) ? (int) $task_details->working_minutes : 0;
+            //     $taskSeconds = isset($task_details->working_seconds) ? (int) $task_details->working_seconds : 0;
+
+            //     $time = Carbon::createFromTime($taskHours, $taskMinutes, $taskSeconds);
+            //     $formattedTime = $time->format('H:i:s');
+
+            //     $formattedTimeInSeconds = strtotime($formattedTime);
+
+            //     $startDateTime = isset($row->receive_time)? Carbon::parse($row->receive_time) : Carbon::parse($row->receive_time);
+            //     $endDateTime = isset($row->issue_time)? Carbon::parse($row->issue_time): Carbon::parse($row->issue_time);
+
+            //     $difference = $endDateTime->diff($startDateTime)->format('%H:%i:%s');
+            //     $differenceInSeconds = strtotime($difference);
+
+
+            //     if($differenceInSeconds > $officeDurationInSeconds){
+
+            //         $adjustedDifferenceInSeconds = $differenceInSeconds - $officeDurationInSeconds;
+            //         $adjustedDifferenceInSeconds = $differenceInSeconds - $adjustedDifferenceInSeconds;
+            //         $adjustedDifferenceInSeconds = ($differenceInSeconds - $adjustedDifferenceInSeconds);
+            //         $countableTime = gmdate('H:i:s',$adjustedDifferenceInSeconds);
+            //         $countableTimeInSecond = strtotime($countableTime);
+            //         $countableTime = Carbon::parse($countableTime);
+
+
+            //             $days = $countableTime->diffInDays();
+            //             $hours = $countableTime->diffInHours() - ($days * 24);  // Subtract the hours already counted in days
+            //             $minutes = $countableTime->diffInMinutes() - ($days * 24 * 60) - ($hours * 60);  // Subtract the minutes already counted in days and hours
+            //             $result = sprintf('%d days %d hours %d minutes', $days, $hours, $minutes);
+
+            //             if($countableTimeInSecond >= $formattedTimeInSeconds){
+            //                $result = '<span style="color: red;">' .$result . '</span>';
+            //             }else{
+            //                 $result = '<span style="color: green;">' .$result. '</span>';
+            //             }
+
+            //          return $result;
+            //     }
+
+            //     if ($differenceInSeconds >= $formattedTimeInSeconds) {
+            //             // If true, return the difference time in red font
+            //         $diff = '<span style="color: red;">' . $endDateTime->diff($startDateTime)->format('%d days %h hours %i minute') . '</span>';
+            //     } else {
+            //         // If false, return the difference time in green font
+            //         $diff = '<span style="color: green;">' . $endDateTime->diff($startDateTime)->format('%d days %h hours %i minute') . '</span>';
+            //     }
+            //     return $diff;
+            // })
             ->addColumn('duration', function ($row) {
+                $getOfficeTime = GeneralSetting::first();
+                $officeStartTime = Carbon::parse($getOfficeTime->StartTime ?? '11:00:00');
+                $officeEndTime = Carbon::parse($getOfficeTime->EndTime ?? '20:00:00');
+                $officeDurationInSeconds = $officeEndTime->diffInSeconds($officeStartTime);
 
                 $task_details = Task_manage::where('types_of_works', $row->typesofwork_id)
-                ->where('task1_id', $row->receive_switch)
-                ->where('task2_id', $row->switch_type)
-                ->first();
+                    ->where('task1_id', $row->receive_switch)
+                    ->where('task2_id', $row->switch_type)
+                    ->first();
 
-                $taskHours = isset($task_details->working_hours) ? (int)$task_details->working_hours : 0;
-                $taskMinutes = isset($task_details->working_minutes) ? (int)$task_details->working_minutes : 0;
-                $taskSeconds = isset($task_details->working_seconds) ? (int)$task_details->working_seconds : 0;
+                $taskHours = $task_details->working_hours ?? 0;
+                $taskMinutes = $task_details->working_minutes ?? 0;
+                $taskSeconds = $task_details->working_seconds ?? 0;
 
-                $time = Carbon::createFromTime($taskHours, $taskMinutes, $taskSeconds);
-                $formattedTime = $time->format('H:i:s');
+                $formattedTimeInSeconds = $taskHours * 3600 + $taskMinutes * 60 + $taskSeconds;
 
-                $startDateTime = Carbon::parse($row->receive_time);
-                $endDateTime = Carbon::parse($row->issue_time);
+                $startDateTime = Carbon::parse($row->receive_time ?? Carbon::now());
+                $endDateTime = Carbon::parse($row->issue_time ?? Carbon::now());
 
-                $difference = $endDateTime->diff($startDateTime)->format('%H:%i:%s');
-                $formattedTimeInSeconds = strtotime($formattedTime);
-                $differenceInSeconds = strtotime($difference);
+                $differenceInSeconds = $endDateTime->diffInSeconds($startDateTime);
+
+                if ($differenceInSeconds > $officeDurationInSeconds) {
+                    $adjustedDifferenceInSeconds = $differenceInSeconds - $officeDurationInSeconds;
+                    $countableTime = Carbon::createFromTimestamp($adjustedDifferenceInSeconds)->setTimezone('UTC');
+
+                    $days = floor($countableTime->day - 1); // subtracting 1 because day is 1-based
+                    $hours = floor($countableTime->hour);
+                    $minutes = floor($countableTime->minute);
+                    $result = sprintf('%d days %d hours %d minutes', $days, $hours, $minutes);
+
+                    if ($adjustedDifferenceInSeconds >= $formattedTimeInSeconds) {
+                        return '<span style="color: red;">' . $result . '</span>';
+                    } else {
+                        return '<span style="color: green;">' . $result . '</span>';
+                    }
+                }
 
                 if ($differenceInSeconds >= $formattedTimeInSeconds) {
-                    // If true, return the difference time in red font
-                    $diff = '<span style="color: red;">' . $endDateTime->diff($startDateTime)->format('%d days %h hours %i minute') . '</span>';
+                    return '<span style="color: red;">' . $endDateTime->diff($startDateTime)->format('%d days %h hours %i minute') . '</span>';
                 } else {
-                    // If false, return the difference time in green font
-                    $diff = '<span style="color: green;">' . $endDateTime->diff($startDateTime)->format('%d days %h hours %i minute') . '</span>';
+                    return '<span style="color: green;">' . $endDateTime->diff($startDateTime)->format('%d days %h hours %i minute') . '</span>';
                 }
-                return $diff;
             })
+
+
             ->rawColumns([
                 'index',
                 'order_no',
@@ -203,6 +322,11 @@ class ReportController extends Controller
                 $getOrderDetails = order::where('id', $row->order_id)->first();
                 return isset($getOrderDetails->name) ? $getOrderDetails->name : '';
             })
+            ->addColumn('mobile_no', function ($row) {
+
+                $getOrderDetails = order::where('id', $row->order_id)->first();
+                return isset($getOrderDetails->mobile) ? $getOrderDetails->mobile : '';
+            })
             ->addColumn('user_name', function ($row) {
                 $getUserName = Admin::where('id', $row->user_id)->first();
                 $userName = ($getUserName->firstname) . ($getUserName->lastname);
@@ -233,13 +357,15 @@ class ReportController extends Controller
                 // // Convert the string to a Carbon instance
                 $carbonDate = Carbon::parse($switch_in_date_time);
                 $currentDateTime = Carbon::now();
-                $office_start_time = '11:00:00';
-                $office_end_time = '20:00:00';
-                $office_start_time_array = explode(':', $office_start_time);
-                $office_end_time_array = explode(':', $office_end_time);
 
                 $working_days_array = [];
                 $general_settings = GeneralSetting::where('holiday', 'on')->get();
+                $office_start_time = isset($general_settings[0]->StartTime)?$general_settings[0]->StartTime:'';
+                $office_end_time = isset($general_settings[0]->EndTime)?$general_settings[0]->EndTime:'';
+                // dd($office_start_time,$office_end_time);
+                $office_start_time_array = explode(':', $office_start_time);
+                $office_end_time_array = explode(':', $office_end_time);
+
                 if(count($general_settings) > 0){
                     foreach($general_settings as $g_setting){
                         $day = (isset($g_setting['Days'])) ? $g_setting['Days'] : '';
@@ -260,6 +386,7 @@ class ReportController extends Controller
                         }
                     }
                 }
+
 
                 $total_work_seconds = $working_hours * 3600 + $working_minutes * 60 + $working_seconds;
 
@@ -320,7 +447,8 @@ class ReportController extends Controller
                 'inswitch_time',
                 'user_name',
                 'remainig_time',
-                'customer_name'
+                'customer_name',
+                'mobile_no'
             ])
             ->make(true);
         }
@@ -360,6 +488,11 @@ class ReportController extends Controller
                 $getOrderDetails = order::where('id', $row->order_id)->first();
                 return isset($getOrderDetails->name) ? $getOrderDetails->name : '';
             })
+            ->addColumn('mobile_no', function ($row) {
+
+                $getOrderDetails = order::where('id', $row->order_id)->first();
+                return isset($getOrderDetails->mobile) ? $getOrderDetails->mobile : '';
+            })
             ->addColumn('user_name', function ($row) {
                 $getUserName = Admin::where('id', $row->user_id)->first();
                 $userName = ($getUserName->firstname) . ($getUserName->lastname);
@@ -395,12 +528,20 @@ class ReportController extends Controller
                 }
                 return $remainingTime;
             })
+            ->addColumn('actions',function($row){
+                $orderNo = $row->order['orderno'];
+                $action_html = '<a href='.route("order.retrive",["id" => $orderNo ]) .' class="btn btn-sm custom-btn rounded-circle" ><i class="fa fa-info-circle" aria-hidden="true"></i></a>';
+                $action_html .= '<a href="' . route("reports.order_history_details", $row->order_id) . '" class="btn btn-sm custom-btn" ><i class="fa fa-list-alt" aria-hidden="true"></i></a>';
+                return $action_html;
+            })
             ->rawColumns([
                 'order_no',
                 'inswitch_time',
                 'user_name',
                 'remainig_time',
-                'customer_name'
+                'customer_name',
+                'mobile_no',
+                'actions'
             ])
             ->make(true);
 
@@ -440,6 +581,11 @@ class ReportController extends Controller
                     $getOrderNo = order::where('id', $orderId)->first();
                     return isset($getOrderNo->orderno) ? $getOrderNo->orderno : '';
                 })
+                ->addColumn('mobile_no', function ($row) {
+
+                    $getOrderDetails = order::where('id', $row->order_id)->first();
+                    return isset($getOrderDetails->mobile) ? $getOrderDetails->mobile : '';
+                })
                 ->addColumn('inswitch_time', function ($row) {
                     $getReceiveDate = isset($row->receive_time) ? $row->receive_time : '';
                     if ($getReceiveDate == null) {
@@ -476,6 +622,9 @@ class ReportController extends Controller
                 })
                 ->addColumn('duration', function ($row) {
 
+                    $officeStartTime = Carbon::parse('11:00 am');
+                    $officeEndTime = Carbon::parse('8:00 pm');
+
                     $taskTime = Task_manage::where('types_of_works', $row->typesofwork_id)
                         ->where('task1_id', $row->receive_switch)
                         ->where('task2_id', $row->switch_type)
@@ -489,9 +638,18 @@ class ReportController extends Controller
                     $time = Carbon::createFromTime($taskHours, $taskMinutes, $taskSeconds);
                     $formattedTime = $time->format('H:i:s');
 
-
                     $startDateTime = Carbon::parse($row->receive_time);
                     $endDateTime = Carbon::parse($row->issue_time);
+
+                       // Ensure the start time is not before the office start time
+                        if ($startDateTime->lt($officeStartTime)) {
+                            $startDateTime = $officeStartTime;
+                        }
+
+                        // Ensure the end time is not after the office end time
+                        if ($endDateTime->gt($officeEndTime)) {
+                            $endDateTime = $officeEndTime;
+                        }
 
                     $difference = $endDateTime->diff($startDateTime)->format('%H:%i:%s');
                     $formattedTimeInSeconds = strtotime($formattedTime);
@@ -510,7 +668,7 @@ class ReportController extends Controller
                     $createdDate = date('d-m-Y', strtotime($row->created_at));
                     return $createdDate;
                 })
-                ->rawColumns(['inswitch_time', 'outswitch_time', 'duration', 'order_no', 'created_date'])
+                ->rawColumns(['inswitch_time', 'outswitch_time', 'duration', 'order_no', 'created_date','mobile_no'])
                 ->make(true);
         }
         $departments = Role::get();
