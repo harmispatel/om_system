@@ -674,4 +674,8 @@ class ReportController extends Controller
         $departments = Role::get();
         return view('admin.reports.department-performance-report', compact('departments'));
     }
+
+    public function trassedOrders(Request $request){
+       return redirect()->back()->with('error','work In Process On Trassed');
+    }
 }

@@ -12,7 +12,7 @@
     foreach ($permissions as $permission) {
     $permission_ids[] = $permission;
     }
-    
+
     $counter_permission = Spatie\Permission\Models\Permission::where('name', 'new_order')->first();
     $counter1_permission = Spatie\Permission\Models\Permission::where('name', 'repeat_order')->first();
 @endphp
@@ -34,7 +34,6 @@
                 <i class="bi bi-plus-lg"></i>
             </a>
         @endif
-            
         </div>
     </div>
 </div>
@@ -81,7 +80,7 @@
                                 </tr>
                             </thead>
                             <tbody></tbody>
-                        </table>  
+                        </table>
                     </div>
                 </div>
             </div>
@@ -149,7 +148,7 @@ var table = $('#OrderTable').DataTable({
         //         }else{
         //             return "<img src=\"{{asset('/public/images/qrcodes/')}}"+"/"+data+"\" height=\"50\"/>";
         //         }
-               
+
         //     }
         // },
         {
@@ -216,7 +215,7 @@ toastr.options = {
     timeOut: 10000
 }
 
-@if(Session::has('success')) 
+@if(Session::has('success'))
     toastr.success("{{ Session::get("success") }}")
 @endif
 

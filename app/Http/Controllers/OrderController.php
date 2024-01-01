@@ -605,57 +605,63 @@ class OrderController extends Controller
     public function lateIssue(Request $request){
 
         $request->validate([
-            'switch1' => 'required',
             'order_id' => 'required',
             'department_id' => 'required',
             'permission_id' => 'required',
-
+            'switch1_option' => 'required_if:switch1_text,null',
+            'switch1_text' => 'required_if:switch1_option,null'
         ]);
 
-       try{
+        try{
 
-        $order_id = $request->order_id;
-        $departmentId = $request->department_id;
-        $getPermissionId = $request->permission_id;
-        $reason = $request->switch1;
-        $orderdetail = order::where('id',$order_id)->first();
+            if($request->switch1_option == '' || $request->switch1_option == null){
+                $inputReason = $request->switch1_text;
+            }else{
+                $inputReason = $request->switch1_option;
+            }
 
-        $orderdetail->order_status = $departmentId;
-        $orderdetail->save();
+            $order_id = $request->order_id;
+            $departmentId = $request->department_id;
+            $getPermissionId = $request->permission_id;
+            $reason = $inputReason;
+            $orderdetail = order::where('id',$order_id)->first();
 
-        $order_id = $orderdetail->id;
-        $userType = Auth::guard('admin')->user()->user_type;
-        $workId = $orderdetail->counter_id;
-        $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
+            $orderdetail->order_status = $departmentId;
+            $orderdetail->save();
+
+            $order_id = $orderdetail->id;
+            $userType = Auth::guard('admin')->user()->user_type;
+            $workId = $orderdetail->counter_id;
+            $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
 
 
-        if(empty($getOrderhistory)){
+            if(empty($getOrderhistory)){
 
-          $createNewOrderhistory = Order_history::create([
-             'user_id' =>  Auth::guard('admin')->user()->id,
-             'order_id' => $order_id ,
-             'user_type' => $userType,
-             'typesofwork_id' => $workId,
-             'switch_type' =>  $getPermissionId,
-             'issue_time' => Carbon::now(),
-             'reason_for_late' => $reason,
-          ]);
+            $createNewOrderhistory = Order_history::create([
+                'user_id' =>  Auth::guard('admin')->user()->id,
+                'order_id' => $order_id ,
+                'user_type' => $userType,
+                'typesofwork_id' => $workId,
+                'switch_type' =>  $getPermissionId,
+                'issue_time' => Carbon::now(),
+                'reason_for_late' => $reason,
+            ]);
 
-        }else{
+            }else{
 
-             $update = Order_history::find($getOrderhistory->id);
-             $update->issue_time = Carbon::now();
-             $update->switch_type = $getPermissionId;
-             $update->reason_for_late = $reason;
-             $update->save();
+                $update = Order_history::find($getOrderhistory->id);
+                $update->issue_time = Carbon::now();
+                $update->switch_type = $getPermissionId;
+                $update->reason_for_late = $reason;
+                $update->save();
 
+            }
+
+            return redirect()->back()->with('success','Issue Successfully With Your Reason For Late..');
+
+        }catch(\Throwable $th){
+            return redirect()->back()->with('error','Internal Server Error!');
         }
-
-        return redirect()->back()->with('success','Issue Successfully With Your Reason For Late..');
-
-    }catch(\Throwable $th){
-          return redirect()->back()->with('error','Internal Server Error!');
-       }
 
 
 

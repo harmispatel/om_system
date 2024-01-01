@@ -78,14 +78,16 @@
                         @if (count($reasons) > 0)
                             @foreach ($reasons as $switch)
                                 <div class="mb-1">
-                                    <input type="radio" name="switch1" id="switch1_{{ $switch['id'] }}" {{ (old('switch1') == $switch['id']) ? 'checked' : '' }} value="{{ $switch['reason'] }}"> <label for="switch1_{{ $switch['id'] }}" style="cursor: pointer; font-weight:700; font-size:15px;">{{ $switch['reason'] }}</label>
-                                </div> <hr style="margin: 0.5rem 0">
+                                    <input type="radio" name="switch1_option" id="switch1_{{ $switch['id'] }}" value="{{ $switch['reason'] }}">
+                                    <label for="switch1_{{ $switch['id'] }}" style="cursor: pointer; font-weight:700; font-size:15px;">{{ $switch['reason'] }}</label>
+                                </div>
+                                <hr style="margin: 0.5rem 0">
                             @endforeach
                             <div class="mb-1">
-                                <input type="radio" name="switch1" id="switch1_other" value="other">
+                                <input type="radio" name="switch1_option" id="switch1_other" value="">
                                 <label for="switch1_other" style="cursor: pointer; font-weight:700; font-size:15px;">Other</label>
                                 <div id="otherReasonContainer" style="display:none;">
-                                    <input type="text" name="switch1" class="form-control" id="otherReasonInput" placeholder="Enter your reason">
+                                    <input type="text" name="switch1_text" class="form-control" id="otherReasonInput" placeholder="Enter your reason">
                                 </div>
                             </div>
                         @endif
@@ -466,33 +468,6 @@
 <script type="text/javascript">
 $(document).ready(function() {
 
-    //form submit
-    // $("#lateIssueForm").submit(function(event) {
-    //     event.preventDefault(); // Prevent default form submission
-
-    //     // Capture selected reason
-    //     var selectedReason = $("input[name='switch1']").val();
-
-    //     var csrfToken = $('meta[name="csrf-token"]').attr('content');
-    //     // Send data to the server
-    //     $.ajax({
-    //         url: '{{route("late-issue")}}',
-    //         method: 'POST',
-    //         headers: {
-    //             'X-CSRF-TOKEN': csrfToken
-    //         },
-    //         data: {
-    //             reason: selectedReason,
-    //         },
-    //         success: function(response) {
-    //             if (!response.delay) {
-    //                 window.location.href = '/your-redirect-url';
-    //             } else {
-
-    //             }
-    //         }
-    //     });
-    // });
     // Check if there's a message in the session
     let errorMessage = "{{ session('massage') }}";
     if (errorMessage) {
@@ -506,23 +481,37 @@ $(document).ready(function() {
     $("#submitIssue").prop('disabled', true);
 
     // Check if any radio button with the name 'switch1' is selected
-    $('input[name="switch1"]').on('change', function() {
-        if ($('input[name="switch1"]:checked').length > 0) {
+    $('input[name="switch1_option"]').on('change', function() {
+
+        if ($('input[name="switch1_option"]:checked').length > 0) {
             // Enable the "Issue" button
             $("#submitIssue").prop('disabled', false);
 
               // If "Other" option is selected, show the input field
-              if ($('input[name="switch1"]:checked').val() === 'other') {
+              if ($('input[name="switch1_option"]:checked').val() === '') {
+                $("#submitIssue").prop('disabled', true);
                 $("#otherReasonContainer").show();
-            } else {
-                $("#otherReasonContainer").hide();
-            }
+
+              } else {
+                  $("#otherReasonContainer").hide();
+              }
         } else {
             // Disable the "Issue" button
             $("#submitIssue").prop('disabled', true);
         }
     });
+
 });
+
+$('#otherReasonInput').on('keyup',function(){
+    var inp = $(this).val();
+    if(inp.length > 0){
+        $("#submitIssue").prop('disabled', false);
+    }else{
+        $("#submitIssue").prop('disabled', true);
+    }
+});
+
 function share(){
         var currenturl = window.location.href;
         if(navigator.share){
