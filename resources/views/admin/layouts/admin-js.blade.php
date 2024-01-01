@@ -7,9 +7,9 @@
 
 {{-- Jquery --}}
 {{-- <script src="path/to/select2.min.js"></script> --}}
+<script src="{{ asset('public/assets/js/jquery.min.js') }}"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-<script src="{{ asset('public/assets/js/jquery.min.js') }}"></script>
 
 {{-- handleby --}}
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>

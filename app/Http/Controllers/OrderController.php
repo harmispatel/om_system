@@ -9,16 +9,14 @@ use App\Models\order;
 use App\Models\orderimage;
 use App\Models\hadleby;
 use App\Models\customer_name;
-use DataTables;
 use App\Models\{Order_history, Reason, Task_manage};
 use App\Models\types_work;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use App\Models\GeneralSetting;
-use DateTime;
-use File;
 use Illuminate\Support\Facades\URL;
+use Yajra\DataTables\Facades\DataTables;
 
 class OrderController extends Controller
 {
@@ -27,8 +25,6 @@ class OrderController extends Controller
     {
         $this->middleware('permission:order', ['only' => ['index']]);
     }
-
-
 
     public function mobileSetName(Request $request){
 
@@ -203,18 +199,10 @@ class OrderController extends Controller
         }
     }
 
-
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    // Display a listing of the resource.
     public function index(Request $request)
     {
-
         if($request->ajax()){
-
-
             $user_type = Auth::guard('admin')->user()->user_type;
 
             if($user_type == 1){
@@ -223,63 +211,52 @@ class OrderController extends Controller
                 $orders = order::where('order_status',$user_type)->latest();
             }
 
-                return DataTables::of($orders)
-                ->addIndexColumn()
-                ->editColumn('SelectOrder',function($orders){
+            return DataTables::of($orders)
+            ->addIndexColumn()
+            ->editColumn('SelectOrder',function($orders){
 
-                    if ($orders->SelectOrder == 0) {
-                        return 'New Order';
-                    } else  {
-                        return 'Repeat Order';
-                    }
-                })
-                ->editColumn('order_status',function($orders){
+                if ($orders->SelectOrder == 0) {
+                    return 'New Order';
+                } else  {
+                    return 'Repeat Order';
+                }
+            })
+            ->editColumn('order_status',function($orders){
 
-                    $getrole = Role::where('id', $orders->order_status)->first();
+                $getrole = Role::where('id', $orders->order_status)->first();
 
                 $getrole = Role::where('id', $orders->order_status)->first();
                 if(!$getrole){
-                   if($orders->order_status == '11'){
+                if($orders->order_status == '11'){
                     $html_button = "<span class='badge bg-success'>Delivery Completed</span>";
                     return $html_button;
-                   }else{
-                     $html_button = "<span class='badge bg-warning'>Saleing</span>";
-                     return $html_button;
-                   }
+                }else{
+                    $html_button = "<span class='badge bg-warning'>Saleing</span>";
+                    return $html_button;
+                }
                 }else{
                     return isset ($getrole->name) ? $getrole->name : '';
                 }
             })
-
-
             ->addColumn('actions',function($row){
+                $orderNo = isset($row->orderno) ? $row->orderno : '';
+                $user_details =  Auth::guard('admin')->user();
+                $user_type = (isset($user_details->user_type)) ? $user_details->user_type : '';
 
-              $orderNo = isset($row->orderno) ? $row->orderno : '';
-              $userdetail =  Auth::guard('admin')->user();
+                $action_html = '';
+                $action_html .= '<div class="d-flex">';
+                    $action_html .= '<a href='.route("order.retrive",["id" => $orderNo ]) .' class="btn btn-sm btn-primary rounded-circle me-2"><i class="fa fa-eye" aria-hidden="true"></i></a>';
 
-              $orderDeletePermission = $userdetail->delete_order;
+                    $action_html .= '<a href="'.route('reports.order_history_details', $row->id).'" class="btn btn-sm btn-primary rounded-circle me-2"><i class="fa fa-history" aria-hidden="true"></i></a>';
 
-            //   if($user_type != 1){
-
-            //     $action_html = '<button class="btn rounded-circle btn-sm btn-danger me-1 disabled"><i class="fa fa-eye" aria-hidden="true"></i></a>';
-            //     return $action_html;
-
-            //   }else{
-                $action_html = '<div class="row">';
-                $action_html .= '<div class="col-md-5">';
-                $action_html .= '<a href='.route("order.retrive",["id" => $orderNo ]) .' class="btn btn-sm btn-info rounded-circle"><i class="fa fa-eye" aria-hidden="true"></i></a>';
+                    if($user_type == 1 || $user_type == 2){
+                        // $action_html .= '<a onclick="deleteOrderRecord(\''.$orderNo.'\')" class="btn btn-sm btn-danger rounded-circle"><i class="fa fa-trash" aria-hidden="true"></i></a>';
+                        $action_html .= '<a class="btn btn-sm btn-danger rounded-circle"><i class="fa fa-ban" aria-hidden="true"></i></a>';
+                    }
                 $action_html .= '</div>';
-                $action_html .= '<div class="col-md-5">';
-                if($orderDeletePermission == 1){
-                    $action_html .= '<a onclick="deleteOrderRecord(\''.$orderNo.'\')" class="btn btn-sm btn-danger rounded-circle"><i class="fa fa-trash" aria-hidden="true"></i></a>';
-                }else{
-                    $action_html .= '';
-                }
-                $action_html .= '</div></div>';
                 return $action_html;
-              //}
             })
-            ->rawColumns(['actions','order_status'])
+            ->rawColumns(['actions','order_status', 'SelectOrder'])
             ->make(true);
         }
        return view('admin.orders.orders');
