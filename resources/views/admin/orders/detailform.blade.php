@@ -33,7 +33,7 @@
                                                                 <!-- <td style="border-bottom: 1px solid #000;padding:10px 5px"><b>Order Type</b></td> -->
                                                                 <td colspan="2"
                                                                     style="border-bottom: 1px solid #000;padding:5px;">
-                                                                    {{ ($order_details->order_type == 1) ? 'Repeat Order' : 'New Order' }}
+                                                                    {{ ($order_details->SelectOrder == 1) ? 'Repeat Order' : 'New Order' }}
                                                                 </td>
                                                             </tr>
                                                             <tr>
