@@ -128,6 +128,14 @@ class ReportController extends Controller
                 $lastname = (isset($row['user']['lastname'])) ? $row['user']['lastname'] : '';
                 return $firstname." ".$lastname;
             })
+            ->editColumn('reason_for_late',function($row){
+                $reason = $row->reason_for_late;
+                if(isset($reason)){
+                   return $reason;
+                }else{
+                    return "No Delay";
+                }
+            })
             // ->addColumn('duration', function ($row) {
 
             //     $getOfficeTime = GeneralSetting::first();

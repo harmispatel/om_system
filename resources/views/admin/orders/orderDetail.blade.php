@@ -45,6 +45,7 @@
     $getOrderDetail = session('orderDetail',null);
     $orderId = $getOrderDetail ? $getOrderDetail->id:'';
     $getDepartmentDetail = session('getDepartment',null);
+    $PermissionType = $getPermissionIdValue ? $getPermissionIdValue->permission_type :'';
     $departmentId = $getDepartmentDetail ? $getDepartmentDetail->id : '';
     $issueSwitch = $getPermissionIdValue ? $getPermissionIdValue->name : '';
     $issueSwitchId = $getPermissionIdValue ? $getPermissionIdValue->id : '';
@@ -61,14 +62,14 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title"><span style="color:red;">Why Getting Late Issue ?</span></h5>
+        <h5 class="modal-title"><span style="color:red;">Why Getting Late ?</span></h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <form action="{{route('late-issue')}}" method="POST" id="lateIssueForm">
+        <form action="{{ $PermissionType == 1 ? route('late-receive') : route('late-issue') }}" method="POST" id="lateIssueForm">
             @csrf
             <div class="col-md-12 mb-3">
-                    <div class="form-label">Issue Switch : {{$issueSwitch}}
+                    <div class="form-label">Switch Type : {{$issueSwitch}}
                         <input type="hidden" name="permission_id" value="{{$issueSwitchId}}">
                         <input type="hidden" name="order_id" value="{{ $orderId }}">
                         <input type="hidden" name="department_id" value="{{$departmentId}}">
@@ -101,7 +102,11 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button id="submitIssue"type="submit" class="btn btn-warning">Issue</button>
+                @if($PermissionType == 1)
+                    <button id="submitIssue"type="submit" class="btn btn-warning">Receive</button>
+                @else
+                    <button id="submitIssue"type="submit" class="btn btn-warning">Issue</button>
+                @endif
             </div>
       </form>
     </div>
@@ -559,6 +564,10 @@ toastr.options = {
 toastr.success('{{ Session::get('success') }}')
 @endif
 
+
+@if(Session::has('lateReceive'))
+   toastr.error('{{Session::get('lateReceive')}}')
+@endif
 // @if (Session::has('error'))
 //     toastr.error('{{ Session::get('error') }}')
 // @endif

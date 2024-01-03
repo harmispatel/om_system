@@ -105,7 +105,7 @@ $(function() {
         ajax: {
             url: "{{ route('reports.performance') }}",
             data:function(d){
-                d.department = $('#department').val(); 
+                d.department = $('#department').val();
                 d.startDate = $('#startdate').val();
                 d.endDate= $('#enddate').val();
             }
@@ -146,8 +146,8 @@ $(function() {
     });
 
     $('#search').on('click',function(){
-              table.ajax.reload();
-        });
+        table.ajax.reload();
+    });
 });
 
 

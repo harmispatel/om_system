@@ -122,6 +122,7 @@ Route::group(['prefix' => 'admin'], function ()
         route::get('/orders/complete/delivery/{id}',[OrderController::class,'completeDelivery'])->name('orders.delivery');
         route::get('/orders/issue/saleing/{id}',[OrderController::class,'issueForSaleing'])->name('orders.iss.saleing');
         route::post('/orders/issue/late',[OrderController::class,'lateIssue'])->name('late-issue');
+        route::post('/orders/receive/late',[OrderController::class,'lateReceive'])->name('late-receive');
         //getdata
         Route::post('/get-data',[OrderController::class,'getData'])->name('getdata');
         Route::get('/fetch-data',[OrderController::class,'fetchdata'])->name('fetchdata');

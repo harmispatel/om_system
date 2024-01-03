@@ -17,7 +17,7 @@ use Illuminate\Support\Carbon;
 use App\Models\GeneralSetting;
 use Illuminate\Support\Facades\URL;
 use Yajra\DataTables\Facades\DataTables;
-
+use Illuminate\Support\Facades\Log;
 class OrderController extends Controller
 {
 
@@ -203,12 +203,27 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         if($request->ajax()){
-            $user_type = Auth::guard('admin')->user()->user_type;
 
-            if($user_type == 1){
-                $orders= order::latest();
+            $user_type = Auth::guard('admin')->user()->user_type;
+            $currentDate = Carbon::now();
+            $startDate = $request->startDate;
+            $endDate = $request->endDate;
+            // Get the first day of the current month
+            $firstDayOfCurrentMonth = $currentDate->copy()->subMonth();
+            // Get the last day of the previous month (e.g., 31st of December)
+            $lastDayOfLastMonth = $currentDate->copy();
+
+            if($startDate != null && $endDate!= null){
+                if ($startDate > $endDate) {
+                    [$startDate, $endDate] = [$endDate, $startDate];
+                }
+                $orders = order::whereBetween('created_at',[$startDate,$endDate])->latest();
             }else{
-                $orders = order::where('order_status',$user_type)->latest();
+                $orders = order::whereBetween('created_at', [$firstDayOfCurrentMonth, $lastDayOfLastMonth])->latest();
+            }
+
+            if($user_type != 1){
+                $orders = $orders->where('order_status',$user_type)->get();
             }
 
             return DataTables::of($orders)
@@ -238,6 +253,10 @@ class OrderController extends Controller
                     return isset ($getrole->name) ? $getrole->name : '';
                 }
             })
+            ->addColumn('created_date', function ($row) {
+                $createdDate = date('d-m-Y', strtotime($row->created_at));
+                return $createdDate;
+            })
             ->addColumn('actions',function($row){
                 $orderNo = isset($row->orderno) ? $row->orderno : '';
                 $user_details =  Auth::guard('admin')->user();
@@ -256,7 +275,7 @@ class OrderController extends Controller
                 $action_html .= '</div>';
                 return $action_html;
             })
-            ->rawColumns(['actions','order_status', 'SelectOrder'])
+            ->rawColumns(['actions','order_status', 'SelectOrder','created_date'])
             ->make(true);
         }
        return view('admin.orders.orders');
@@ -578,7 +597,47 @@ class OrderController extends Controller
         return ['delay' => false];
 
     }
+    public function lateReceive(Request $request){
 
+       $request->validate([
+        'order_id' => 'required',
+        'permission_id' => 'required',
+        'switch1_option' => 'required_if:switch1_text,null',
+        'switch1_text' => 'required_if:switch1_option,null'
+       ]);
+
+       try{
+
+            if($request->switch1_option == '' || $request->switch1_option == null){
+                $inputReason = $request->switch1_text;
+            }else{
+                $inputReason = $request->switch1_option;
+            }
+
+            $order_id = $request->order_id;
+            $getPermissionId = $request->permission_id;
+            $reason = $inputReason;
+
+            $userType = Auth::guard('admin')->user()->user_type;
+            $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
+
+
+            if(isset($getOrderhistory)){
+
+                $update = Order_history::find($getOrderhistory->id);
+                $update->receive_time = Carbon::now();
+                $update->receive_switch = $getPermissionId;
+                $update->late_receive_reason = $reason;
+                $update->save();
+
+            }
+
+            return redirect()->back()->with('success','Receive Successfully With Your Reason For Late..');
+
+        }catch(\Throwable $th){
+            return redirect()->back()->with('error','Internal Server Error!');
+        }
+    }
     public function lateIssue(Request $request){
 
         $request->validate([
@@ -744,10 +803,10 @@ class OrderController extends Controller
 
                   }else{
 
-                        $getReceiveTime = isset($getOrderhistory->receive_time) ? Carbon::parse($getOrderhistory->receive_time) : null;
-                        $getCurrentTime = Carbon::now();
+                        // $getReceiveTime = isset($getOrderhistory->receive_time) ? Carbon::parse($getOrderhistory->receive_time) : null;
+                        // $getCurrentTime = Carbon::now();
 
-                        if ($getReceiveTime && $getCurrentTime->diffInMinutes($getReceiveTime) > 5 || $userType == 2 || $userType == 1) {
+                        // if ($getReceiveTime && $getCurrentTime->diffInMinutes($getReceiveTime) > 5 || $userType == 2 || $userType == 1) {
 
                             $update = Order_history::find($getOrderhistory->id);
                             $update->issue_time = Carbon::now();
@@ -756,10 +815,10 @@ class OrderController extends Controller
                             $orderdetail->order_status = $getWaxingRole->id;
                             $orderdetail->save();
 
-                        }else {
+                        // }else {
 
-                            return redirect()->back()->with('error','Issue Button Work After 5 min');
-                        }
+                        //     return redirect()->back()->with('error','Issue Button Work After 5 min');
+                        // }
 
 
                   }
@@ -777,18 +836,41 @@ class OrderController extends Controller
             $orderdetail = order::where('orderno',$id)->first();
             $order_id = $orderdetail->id;
             $userType = Auth::guard('admin')->user()->user_type;
-            $getOrderhistory= Order_history::where('order_id',$order_id)->get();
+            $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
             $getPermissionId = Permission::where('name','rec.for.des/cam')->first();
-            foreach($getOrderhistory as $value){
 
-                if($value->user_type == $userType){
+            $currentTime = Carbon::now();
+            $getPermissionId2 = Permission::where('name','iss.for.des/cam')->first();
+            $getWhenIssue = Order_history::where('order_id',$order_id)->where('switch_type', $getPermissionId2->id)->first();
 
-                    $value->update([
-                        'receive_time'=> Carbon::now(),
-                        'receive_switch'=> $getPermissionId->id
-                    ]);
-                    $value->save();
-                }
+            $issueTimeToDesign = isset($getWhenIssue->issue_time) ? $getWhenIssue->issue_time :0;
+
+            if ($currentTime->diffInMinutes($issueTimeToDesign) > 30) {
+                session([
+                    'getPermissionId' => $getPermissionId,
+                     'orderDetail' => $orderdetail,
+
+                ]);
+               return redirect()->back()->with('massage','lateReceive tall me reason!');
+            }
+
+            if(empty($getOrderhistory)){
+
+                $createNewOrderhistory = Order_history::create([
+                    'user_id' =>  Auth::guard('admin')->user()->id,
+                    'order_id' => $order_id ,
+                    'user_type' => $userType,
+                    'typesofwork_id' => $orderdetail->counter_id,
+                    'receive_switch' =>  $getPermissionId->id,
+                    'receive_time' => Carbon::now(),
+                 ]);
+
+            }else{
+
+                $update = Order_history::find($getOrderhistory->id);
+                $update->receive_time = Carbon::now();
+                $update->receive_switch = $getPermissionId->id;
+                $update->save();
             }
 
             return redirect()->back()->with('success','Order Receive successfully at'.now());
@@ -805,17 +887,40 @@ class OrderController extends Controller
             $orderdetail = order::where('orderno',$id)->first();
             $order_id = $orderdetail->id;
             $userType = Auth::guard('admin')->user()->user_type;
-            $getOrderhistory= Order_history::where('order_id',$order_id)->get();
+            $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
             $getPermissionId = Permission::where('name','rec.for.waxing')->first();
-            foreach($getOrderhistory as $value){
-                if($value->user_type == $userType){
 
-                    $value->update([
-                        'receive_time'=> Carbon::now(),
-                        'receive_switch' => $getPermissionId->id
-                    ]);
-                    $value->save();
-                }
+            $currentTime = Carbon::now();
+            $getPermissionId2 = Permission::where('name','qc&iss.for.waxing')->first();
+            $getWhenIssue = Order_history::where('order_id',$order_id)->where('switch_type', $getPermissionId2->id)->first();
+
+            $issueTimeToDesign = isset($getWhenIssue->issue_time) ? $getWhenIssue->issue_time :0;
+
+            if ($currentTime->diffInMinutes($issueTimeToDesign) > 30) {
+                session([
+                    'getPermissionId' => $getPermissionId,
+                     'orderDetail' => $orderdetail,
+
+                ]);
+               return redirect()->back()->with('massage','lateReceive tall me reason!');
+            }
+            if(empty($getOrderhistory)){
+
+                $createNewOrderhistory = Order_history::create([
+                    'user_id' =>  Auth::guard('admin')->user()->id,
+                    'order_id' => $order_id ,
+                    'user_type' => $userType,
+                    'typesofwork_id' => $orderdetail->counter_id,
+                    'receive_switch' =>  $getPermissionId->id,
+                    'receive_time' => Carbon::now(),
+                 ]);
+
+            }else{
+
+                $update = Order_history::find($getOrderhistory->id);
+                $update->receive_time = Carbon::now();
+                $update->receive_switch = $getPermissionId->id;
+                $update->save();
             }
 
             return redirect()->back()->with('success','Order Receive successfully at'.now());
@@ -864,10 +969,10 @@ class OrderController extends Controller
 
                   }else{
 
-                        $getReceiveTime = isset($getOrderhistory->receive_time) ? Carbon::parse($getOrderhistory->receive_time) : null;
-                        $getCurrentTime = Carbon::now();
+                        // $getReceiveTime = isset($getOrderhistory->receive_time) ? Carbon::parse($getOrderhistory->receive_time) : null;
+                        // $getCurrentTime = Carbon::now();
 
-                        if ($getReceiveTime && $getCurrentTime->diffInMinutes($getReceiveTime) > 5) {
+                        // if ($getReceiveTime && $getCurrentTime->diffInMinutes($getReceiveTime) > 5) {
 
                             $update = Order_history::find($getOrderhistory->id);
                             $update->issue_time = Carbon::now();
@@ -876,10 +981,10 @@ class OrderController extends Controller
                             $orderdetail->order_status = $getWaxingRole->id;
                             $orderdetail->save();
 
-                        }else {
+                        // }else {
 
-                            return redirect()->back()->with('error','Issue Button Work After 5 min');
-                        }
+                        //     return redirect()->back()->with('error','Issue Button Work After 5 min');
+                        // }
 
                   }
                 return redirect()->back()->with('success','Issue To Waxing Department Successfully..');
@@ -895,17 +1000,40 @@ class OrderController extends Controller
             $orderdetail = order::where('orderno',$id)->first();
             $order_id = $orderdetail->id;
             $userType = Auth::guard('admin')->user()->user_type;
-            $getOrderhistory= Order_history::where('order_id',$order_id)->get();
+            $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
             $getPermissionId = Permission::where('name','rec.for.casting')->first();
-            foreach($getOrderhistory as $value){
-                if($value->user_type == $userType){
 
-                    $value->update([
-                        'receive_time'=> Carbon::now(),
-                        'receive_switch' => $getPermissionId->id
-                    ]);
-                    $value->save();
-                }
+            $currentTime = Carbon::now();
+            $getPermissionId2 = Permission::where('name','qc&iss.for.casting')->first();
+            $getWhenIssue = Order_history::where('order_id',$order_id)->where('switch_type', $getPermissionId2->id)->first();
+
+            $issueTimeToDesign = isset($getWhenIssue->issue_time) ? $getWhenIssue->issue_time :0;
+
+            if ($currentTime->diffInMinutes($issueTimeToDesign) > 30) {
+                session([
+                    'getPermissionId' => $getPermissionId,
+                     'orderDetail' => $orderdetail,
+
+                ]);
+               return redirect()->back()->with('massage','lateReceive tall me reason!');
+            }
+            if(empty($getOrderhistory)){
+
+                $createNewOrderhistory = Order_history::create([
+                    'user_id' =>  Auth::guard('admin')->user()->id,
+                    'order_id' => $order_id ,
+                    'user_type' => $userType,
+                    'typesofwork_id' => $orderdetail->counter_id,
+                    'receive_switch' =>  $getPermissionId->id,
+                    'receive_time' => Carbon::now(),
+                 ]);
+
+            }else{
+
+                $update = Order_history::find($getOrderhistory->id);
+                $update->receive_time = Carbon::now();
+                $update->receive_switch = $getPermissionId->id;
+                $update->save();
             }
 
             return redirect()->back()->with('success','Order Receive successfully at'.now());
@@ -954,10 +1082,10 @@ class OrderController extends Controller
 
                   }else{
 
-                        $getReceiveTime = isset($getOrderhistory->receive_time) ? Carbon::parse($getOrderhistory->receive_time) : null;
-                        $getCurrentTime = Carbon::now();
+                        // $getReceiveTime = isset($getOrderhistory->receive_time) ? Carbon::parse($getOrderhistory->receive_time) : null;
+                        // $getCurrentTime = Carbon::now();
 
-                        if ($getReceiveTime && $getCurrentTime->diffInMinutes($getReceiveTime) > 5) {
+                        // if ($getReceiveTime && $getCurrentTime->diffInMinutes($getReceiveTime) > 5) {
 
                             $update = Order_history::find($getOrderhistory->id);
                             $update->issue_time = Carbon::now();
@@ -966,10 +1094,10 @@ class OrderController extends Controller
                             $orderdetail->order_status = $getWaxingRole->id;
                             $orderdetail->save();
 
-                        }else {
+                        // }else {
 
-                            return redirect()->back()->with('error','Issue Button Work After 5 min');
-                        }
+                        //     return redirect()->back()->with('error','Issue Button Work After 5 min');
+                        // }
                   }
                 return redirect()->back()->with('success','Issue To Waxing Department Successfully..');
             }
@@ -984,17 +1112,40 @@ class OrderController extends Controller
             $orderdetail = order::where('orderno',$id)->first();
             $order_id = $orderdetail->id;
             $userType = Auth::guard('admin')->user()->user_type;
-            $getOrderhistory= Order_history::where('order_id',$order_id)->get();
+            $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
             $getPermissionId = Permission::where('name','rec.for.delivery')->first();
-            foreach($getOrderhistory as $value){
-                if($value->user_type == $userType){
 
-                    $value->update([
-                        'receive_time'=> Carbon::now(),
-                        'receive_switch' => $getPermissionId->id
-                    ]);
-                    $value->save();
-                }
+            $currentTime = Carbon::now();
+            $getPermissionId2 = Permission::where('name','iss.for.delivery')->first();
+            $getWhenIssue = Order_history::where('order_id',$order_id)->where('switch_type', $getPermissionId2->id)->first();
+
+            $issueTimeToDesign = isset($getWhenIssue->issue_time) ? $getWhenIssue->issue_time :0;
+
+            if ($currentTime->diffInMinutes($issueTimeToDesign) > 30) {
+                session([
+                    'getPermissionId' => $getPermissionId,
+                     'orderDetail' => $orderdetail,
+
+                ]);
+               return redirect()->back()->with('massage','lateReceive tall me reason!');
+            }
+            if(empty($getOrderhistory)){
+
+                $createNewOrderhistory = Order_history::create([
+                    'user_id' =>  Auth::guard('admin')->user()->id,
+                    'order_id' => $order_id ,
+                    'user_type' => $userType,
+                    'typesofwork_id' => $orderdetail->counter_id,
+                    'receive_switch' =>  $getPermissionId->id,
+                    'receive_time' => Carbon::now(),
+                 ]);
+
+            }else{
+
+                $update = Order_history::find($getOrderhistory->id);
+                $update->receive_time = Carbon::now();
+                $update->receive_switch = $getPermissionId->id;
+                $update->save();
             }
 
             return redirect()->back()->with('success','Order Receive successfully at'.now());
@@ -1043,10 +1194,10 @@ class OrderController extends Controller
 
                 }else{
 
-                        $getReceiveTime = isset($getOrderhistory->receive_time) ? Carbon::parse($getOrderhistory->receive_time) : null;
-                        $getCurrentTime = Carbon::now();
+                        // $getReceiveTime = isset($getOrderhistory->receive_time) ? Carbon::parse($getOrderhistory->receive_time) : null;
+                        // $getCurrentTime = Carbon::now();
 
-                        if ($getReceiveTime && $getCurrentTime->diffInMinutes($getReceiveTime) > 5) {
+                        // if ($getReceiveTime && $getCurrentTime->diffInMinutes($getReceiveTime) > 5) {
 
                             $update = Order_history::find($getOrderhistory->id);
                             $update->issue_time = Carbon::now();
@@ -1055,10 +1206,10 @@ class OrderController extends Controller
                             $orderdetail->order_status = $getWaxingRole->id;
                             $orderdetail->save();
 
-                        }else {
+                        // }else {
 
-                            return redirect()->back()->with('error','Issue Button Work After 5 min');
-                        }
+                        //     return redirect()->back()->with('error','Issue Button Work After 5 min');
+                        // }
 
                 }
                 return redirect()->back()->with('success','Issue To Hisab Department Successfully..');
@@ -1074,17 +1225,40 @@ class OrderController extends Controller
             $orderdetail = order::where('orderno',$id)->first();
             $order_id = $orderdetail->id;
             $userType = Auth::guard('admin')->user()->user_type;
-            $getOrderhistory= Order_history::where('order_id',$order_id)->get();
+            $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
             $getPermissionId = Permission::where('name','rec.for.hisab')->first();
-            foreach($getOrderhistory as $value){
-                if($value->user_type == $userType){
 
-                    $value->update([
-                        'receive_time'=> Carbon::now(),
-                        'receive_switch'=>$getPermissionId->id
-                    ]);
-                    $value->save();
-                }
+            $currentTime = Carbon::now();
+            $getPermissionId2 = Permission::where('name','iss.for.hisab')->first();
+            $getWhenIssue = Order_history::where('order_id',$order_id)->where('switch_type', $getPermissionId2->id)->first();
+
+            $issueTimeToDesign = isset($getWhenIssue->issue_time) ? $getWhenIssue->issue_time :0;
+
+            if ($currentTime->diffInMinutes($issueTimeToDesign) > 30) {
+                session([
+                    'getPermissionId' => $getPermissionId,
+                     'orderDetail' => $orderdetail,
+
+                ]);
+               return redirect()->back()->with('massage','lateReceive tall me reason!');
+            }
+            if(empty($getOrderhistory)){
+
+                $createNewOrderhistory = Order_history::create([
+                    'user_id' =>  Auth::guard('admin')->user()->id,
+                    'order_id' => $order_id ,
+                    'user_type' => $userType,
+                    'typesofwork_id' => $orderdetail->counter_id,
+                    'receive_switch' =>  $getPermissionId->id,
+                    'receive_time' => Carbon::now(),
+                 ]);
+
+            }else{
+
+                $update = Order_history::find($getOrderhistory->id);
+                $update->receive_time = Carbon::now();
+                $update->receive_switch = $getPermissionId->id;
+                $update->save();
             }
 
             return redirect()->back()->with('success','Order Receive successfully at'.now());
@@ -1134,9 +1308,9 @@ class OrderController extends Controller
 
                   }else{
 
-                            $getReceiveTime = isset($getOrderhistory->receive_time) ? Carbon::parse($getOrderhistory->receive_time) : null;
-                            $getCurrentTime = Carbon::now();
-                            if ($getReceiveTime && $getCurrentTime->diffInMinutes($getReceiveTime) > 5) {
+                            // $getReceiveTime = isset($getOrderhistory->receive_time) ? Carbon::parse($getOrderhistory->receive_time) : null;
+                            // $getCurrentTime = Carbon::now();
+                            // if ($getReceiveTime && $getCurrentTime->diffInMinutes($getReceiveTime) > 5) {
 
                                 $update = Order_history::find($getOrderhistory->id);
                                 $update->issue_time = Carbon::now();
@@ -1145,9 +1319,9 @@ class OrderController extends Controller
                                 $orderdetail->order_status = $getWaxingRole->id;
                                 $orderdetail->save();
 
-                            }else {
-                                return redirect()->back()->with('error','Issue Button Work After 5 min');
-                            }
+                            // }else {
+                            //     return redirect()->back()->with('error','Issue Button Work After 5 min');
+                            // }
 
                   }
                 return redirect()->back()->with('success','Issue To Central Department Successfully..');
@@ -1163,19 +1337,41 @@ class OrderController extends Controller
             $orderdetail = order::where('orderno',$id)->first();
             $order_id = $orderdetail->id;
             $userType = Auth::guard('admin')->user()->user_type;
-            $getOrderhistory= Order_history::where('order_id',$order_id)->get();
+            $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
             $getPermissionId = Permission::where('name','rec.for.del/cen')->first();
-            foreach($getOrderhistory as $value){
-                if($value->user_type == $userType){
 
-                    $value->update([
-                        'receive_time'=> Carbon::now(),
-                        'receive_switch'=> $getPermissionId->id
-                    ]);
-                    $value->save();
-                }
+            $currentTime = Carbon::now();
+            $getPermissionId2 = Permission::where('name','qc&iss.for.del/cen')->first();
+            $getWhenIssue = Order_history::where('order_id',$order_id)->where('switch_type', $getPermissionId2->id)->first();
+
+            $issueTimeToDesign = isset($getWhenIssue->issue_time) ? $getWhenIssue->issue_time :0;
+
+            if ($currentTime->diffInMinutes($issueTimeToDesign) > 30) {
+                session([
+                    'getPermissionId' => $getPermissionId,
+                     'orderDetail' => $orderdetail,
+
+                ]);
+               return redirect()->back()->with('massage','lateReceive tall me reason!');
             }
+            if(empty($getOrderhistory)){
 
+                $createNewOrderhistory = Order_history::create([
+                    'user_id' =>  Auth::guard('admin')->user()->id,
+                    'order_id' => $order_id ,
+                    'user_type' => $userType,
+                    'typesofwork_id' => $orderdetail->counter_id,
+                    'receive_switch' =>  $getPermissionId->id,
+                    'receive_time' => Carbon::now(),
+                 ]);
+
+            }else{
+
+                $update = Order_history::find($getOrderhistory->id);
+                $update->receive_time = Carbon::now();
+                $update->receive_switch = $getPermissionId->id;
+                $update->save();
+            }
             return redirect()->back()->with('success','Order Receive successfully at'.now());
         }catch (\Throwable $th) {
             return redirect()->back()->with('error','Order Not Receive, Some Error!');
@@ -1223,10 +1419,10 @@ class OrderController extends Controller
                   }else{
 
 
-                            $getReceiveTime = isset($getOrderhistory->receive_time) ? Carbon::parse($getOrderhistory->receive_time) : null;
-                            $getCurrentTime = Carbon::now();
+                            // $getReceiveTime = isset($getOrderhistory->receive_time) ? Carbon::parse($getOrderhistory->receive_time) : null;
+                            // $getCurrentTime = Carbon::now();
 
-                            if ($getReceiveTime && $getCurrentTime->diffInMinutes($getReceiveTime) > 5) {
+                            // if ($getReceiveTime && $getCurrentTime->diffInMinutes($getReceiveTime) > 5) {
 
                                     $update = Order_history::find($getOrderhistory->id);
                                     $update->issue_time = Carbon::now();
@@ -1235,10 +1431,10 @@ class OrderController extends Controller
                                     $orderdetail->order_status = $getWaxingRole->id;
                                     $orderdetail->save();
 
-                            }else {
+                            // }else {
 
-                                return redirect()->back()->with('error','Issue Button Work After 5 min');
-                            }
+                            //     return redirect()->back()->with('error','Issue Button Work After 5 min');
+                            // }
 
                   }
                 return redirect()->back()->with('success','Issue To Ready Department Successfully..');
@@ -1254,17 +1450,40 @@ class OrderController extends Controller
             $orderdetail = order::where('orderno',$id)->first();
             $order_id = $orderdetail->id;
             $userType = Auth::guard('admin')->user()->user_type;
-            $getOrderhistory= Order_history::where('order_id',$order_id)->get();
+            $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
             $getPermissionId = Permission::where('name','rec.for.ready')->first();
-            foreach($getOrderhistory as $value){
-                if($value->user_type == $userType){
 
-                    $value->update([
-                        'receive_time'=> Carbon::now(),
-                        'receive_switch'=> $getPermissionId->id
-                    ]);
-                    $value->save();
-                }
+            $currentTime = Carbon::now();
+            $getPermissionId2 = Permission::where('name','iss.for.ready')->first();
+            $getWhenIssue = Order_history::where('order_id',$order_id)->where('switch_type', $getPermissionId2->id)->first();
+
+            $issueTimeToDesign = isset($getWhenIssue->issue_time) ? $getWhenIssue->issue_time :0;
+
+            if ($currentTime->diffInMinutes($issueTimeToDesign) > 30) {
+                session([
+                    'getPermissionId' => $getPermissionId,
+                     'orderDetail' => $orderdetail,
+
+                ]);
+               return redirect()->back()->with('massage','lateReceive tall me reason!');
+            }
+            if(empty($getOrderhistory)){
+
+                $createNewOrderhistory = Order_history::create([
+                    'user_id' =>  Auth::guard('admin')->user()->id,
+                    'order_id' => $order_id ,
+                    'user_type' => $userType,
+                    'typesofwork_id' => $orderdetail->counter_id,
+                    'receive_switch' =>  $getPermissionId->id,
+                    'receive_time' => Carbon::now(),
+                 ]);
+
+            }else{
+
+                $update = Order_history::find($getOrderhistory->id);
+                $update->receive_time = Carbon::now();
+                $update->receive_switch = $getPermissionId->id;
+                $update->save();
             }
 
             return redirect()->back()->with('success','Order Receive successfully at'.now());
@@ -1313,10 +1532,10 @@ class OrderController extends Controller
 
                   }else{
 
-                            $getReceiveTime = isset($getOrderhistory->receive_time) ? Carbon::parse($getOrderhistory->receive_time) : null;
-                            $getCurrentTime = Carbon::now();
+                            // $getReceiveTime = isset($getOrderhistory->receive_time) ? Carbon::parse($getOrderhistory->receive_time) : null;
+                            // $getCurrentTime = Carbon::now();
 
-                            if ($getReceiveTime && $getCurrentTime->diffInMinutes($getReceiveTime) > 5) {
+                            // if ($getReceiveTime && $getCurrentTime->diffInMinutes($getReceiveTime) > 5) {
 
 
                                     $update = Order_history::find($getOrderhistory->id);
@@ -1326,10 +1545,10 @@ class OrderController extends Controller
                                     $orderdetail->order_status = $getWaxingRole->id;
                                     $orderdetail->save();
 
-                            }else {
+                            // }else {
 
-                                return redirect()->back()->with('error','Issue Button Work After 5 min');
-                            }
+                            //     return redirect()->back()->with('error','Issue Button Work After 5 min');
+                            // }
 
                   }
                 return redirect()->back()->with('success','Issue To Packing Department Successfully..');
@@ -1345,16 +1564,40 @@ class OrderController extends Controller
             $orderdetail = order::where('orderno',$id)->first();
             $order_id = $orderdetail->id;
             $userType = Auth::guard('admin')->user()->user_type;
-            $getOrderhistory= Order_history::where('order_id',$order_id)->get();
+            $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
             $getPermissionId = Permission::where('name','rec.for.packing')->first();
-            foreach($getOrderhistory as $value){
-                if($value->user_type == $userType){
-                    $value->update([
-                        'receive_time'=> Carbon::now(),
-                        'receive_switch'=>$getPermissionId->id
-                    ]);
-                    $value->save();
-                }
+
+            $currentTime = Carbon::now();
+            $getPermissionId2 = Permission::where('name','iss.for.packing')->first();
+            $getWhenIssue = Order_history::where('order_id',$order_id)->where('switch_type', $getPermissionId2->id)->first();
+
+            $issueTimeToDesign = isset($getWhenIssue->issue_time) ? $getWhenIssue->issue_time :0;
+
+            if ($currentTime->diffInMinutes($issueTimeToDesign) > 30) {
+                session([
+                    'getPermissionId' => $getPermissionId,
+                     'orderDetail' => $orderdetail,
+
+                ]);
+               return redirect()->back()->with('massage','lateReceive tall me reason!');
+            }
+            if(empty($getOrderhistory)){
+
+                $createNewOrderhistory = Order_history::create([
+                    'user_id' =>  Auth::guard('admin')->user()->id,
+                    'order_id' => $order_id ,
+                    'user_type' => $userType,
+                    'typesofwork_id' => $orderdetail->counter_id,
+                    'receive_switch' =>  $getPermissionId->id,
+                    'receive_time' => Carbon::now(),
+                 ]);
+
+            }else{
+
+                $update = Order_history::find($getOrderhistory->id);
+                $update->receive_time = Carbon::now();
+                $update->receive_switch = $getPermissionId->id;
+                $update->save();
             }
 
             return redirect()->back()->with('success','Order Receive successfully at'.now());
@@ -1376,10 +1619,10 @@ class OrderController extends Controller
             $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
             $getPermissionId = Permission::where('name','delivery/complete')->first();//
 
-                        $getReceiveTime = isset($getOrderhistory->receive_time) ? Carbon::parse($getOrderhistory->receive_time) : null;
-                        $getCurrentTime = Carbon::now();
+                        // $getReceiveTime = isset($getOrderhistory->receive_time) ? Carbon::parse($getOrderhistory->receive_time) : null;
+                        // $getCurrentTime = Carbon::now();
 
-                        if ($getReceiveTime && $getCurrentTime->diffInMinutes($getReceiveTime) > 5 || $userType == 9) {
+                        // if ($getReceiveTime && $getCurrentTime->diffInMinutes($getReceiveTime) > 5 || $userType == 9) {
 
                             $update = Order_history::find($getOrderhistory->id);
                             $update->issue_time = Carbon::now();
@@ -1388,10 +1631,10 @@ class OrderController extends Controller
                             $orderdetail->order_status =  $orderdetail->order_status + 2;//
                             $orderdetail->save();
 
-                        }else {
+                        // }else {
 
-                            return redirect()->back()->with('error','Issue Button Work After 5 min');
-                        }
+                        //     return redirect()->back()->with('error','Issue Button Work After 5 min');
+                        // }
 
             return redirect()->back()->with('success','Order Delivery Completed successfully at'.now());
         }
@@ -1406,40 +1649,26 @@ class OrderController extends Controller
             $getPermissionId = Permission::where('name','iss.for.saleing')->first();//
             if(isset($orderdetail)){
 
-                // $delayCheck = $this->checkDelay($orderdetail->id, Auth::guard('admin')->user()->user_type,$getPermissionId->id);
-
-                // if ($delayCheck['delay'] == 'true') {
-                //     session([
-                //         'getPermissionId' => $getPermissionId,
-                //          'orderDetail' => $orderdetail,
-                //          'getDepartment' => $getWaxingRole,
-
-                //     ]);
-                //     return redirect()->back()->with('massage', $delayCheck['reason']);
-                // }
                 $order_id = $orderdetail->id;
                 $userType = Auth::guard('admin')->user()->user_type;
                 $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
 
+                        // $getReceiveTime = isset($getOrderhistory->receive_time) ? Carbon::parse($getOrderhistory->receive_time) : null;
+                        // $getCurrentTime = Carbon::now();
 
+                        // if ($getReceiveTime && $getCurrentTime->diffInMinutes($getReceiveTime) > 5) {
 
+                 $update = Order_history::find($getOrderhistory->id);
+                 $update->issue_time = Carbon::now();
+                 $update->switch_type = $getPermissionId->id;
+                 $update->save();
+                 $orderdetail->order_status =  $orderdetail->order_status + 2;//
+                 $orderdetail->save();
 
-                        $getReceiveTime = isset($getOrderhistory->receive_time) ? Carbon::parse($getOrderhistory->receive_time) : null;
-                        $getCurrentTime = Carbon::now();
+                        // }else {
 
-                        if ($getReceiveTime && $getCurrentTime->diffInMinutes($getReceiveTime) > 5) {
-
-                            $update = Order_history::find($getOrderhistory->id);
-                            $update->issue_time = Carbon::now();
-                            $update->switch_type = $getPermissionId->id;
-                            $update->save();
-                            $orderdetail->order_status =  $orderdetail->order_status + 2;//
-                            $orderdetail->save();
-
-                        }else {
-
-                            return redirect()->back()->with('error','Issue Button Work After 5 min');
-                        }
+                        //     return redirect()->back()->with('error','Issue Button Work After 5 min');
+                        // }
 
                 return redirect()->back()->with('success','Order Issued For Saleing successfully at'.now());
             }

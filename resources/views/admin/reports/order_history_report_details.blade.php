@@ -32,6 +32,7 @@
                                         <th>Switch In & Time</th>
                                         <th>Switch Out & Time</th>
                                         <th>User Name</th>
+                                        <th>Reason Of Delay</th>
                                         <th>Duration</th>
                                     </tr>
                                 </thead>
@@ -80,7 +81,11 @@
                         data: 'user_name',
                         name: 'user_name'
                     },
+                    {
+                        data:'reason_for_late',
+                        name:'reason_for_late'
 
+                    },
                     {
                         data: 'duration',
                         name: 'duration',

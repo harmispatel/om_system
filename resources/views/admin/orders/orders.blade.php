@@ -36,6 +36,19 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="card-title">
+                        <div class="row">
+                             <div class="col-md-2">
+                                 <label for="form-control">Start Date</label>
+                                 <input type="date" name="startdate" id = "startdate" class="form-control" placeholder="start Date">
+                            </div>
+                             <div class="col-md-2">
+                                 <label for="form-control">End Date</label>
+                                 <input type="date" name="enddate" id = "enddate" class="form-control" placeholder="End Date">
+                             </div>
+                             <div class="col-md-1">
+                                <button id="search" class="btn custom-btn mt-4"><i class="fa fa-search"></i></i></button>
+                             </div>
+                        </div>
                         </div>
                         <div class="table-responsive custom_dt_table">
                             <table class="table w-100" id="OrderTable">
@@ -51,6 +64,7 @@
                                         <th scope="col">Delivery Date</th>
                                         <th scope="col">Handle By</th>
                                         <th scope="col">Order Status</th>
+                                        <th scope="col">Created Date</th>
                                         <th scope="col">Actions</th>
                                     </tr>
                                 </thead>
@@ -76,7 +90,13 @@
             processing: true,
             serverSide: true,
             pageLength: 100,
-            ajax: "{{ route('order') }}",
+            ajax:{
+                url: "{{ route('order') }}",
+                data:function(d){
+                    d.startDate = $('#startdate').val();
+                    d.endDate= $('#enddate').val();
+                }
+            },
             columns: [
                 {
                     data: 'orderno',
@@ -123,12 +143,20 @@
                     orderable: false,
                 },
                 {
+                    data:'created_date',
+                    name:'created_date'
+                },
+                {
                     data: 'actions',
                     name: 'actions',
                     orderable: false,
                     searchable: false
                 },
             ]
+        });
+
+        $('#search').on('click',function(){
+            table.ajax.reload();
         });
     });
 
