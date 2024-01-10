@@ -9,7 +9,7 @@ use App\Models\order;
 use App\Models\orderimage;
 use App\Models\hadleby;
 use App\Models\customer_name;
-use App\Models\{Order_history, Reason, Task_manage};
+use App\Models\{Block_reason, Order_history, Reason, Task_manage};
 use App\Models\types_work;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Http\Request;
@@ -180,7 +180,8 @@ class OrderController extends Controller
                 $delivery_date = $currentDateTime->addSeconds($totalWorkingSeconds)->format('d-m-Y H:i:s');
 
                 $max_order_id = order::max('id') + 1;
-                $order_no = $work_code.$max_order_id;
+                $rand_number = rand(0, 9);
+                $order_no = $work_code.$max_order_id.$rand_number;
                 $qr_name = $order_no."_qr.svg";
 
                 if(!empty($qr_name) && !file_exists('public/images/qrcodes/'.$qr_name)){
@@ -202,29 +203,31 @@ class OrderController extends Controller
     // Display a listing of the resource.
     public function index(Request $request)
     {
+        $currentDate = Carbon::now();
+        $block_reasons = Block_reason::get();
+        // Get the first day of the current month
+        $firstDayOfCurrentMonth = $currentDate->copy()->subMonth();
+        $lastDayOfLastMonth = $currentDate->copy()->addDay();
+
         if($request->ajax()){
 
             $user_type = Auth::guard('admin')->user()->user_type;
-            $currentDate = Carbon::now();
-            $startDate = $request->startDate;
-            $endDate = $request->endDate;
-            // Get the first day of the current month
-            $firstDayOfCurrentMonth = $currentDate->copy()->subMonth();
-            // Get the last day of the previous month (e.g., 31st of December)
-            $lastDayOfLastMonth = $currentDate->copy();
+            $startDate = Carbon::parse($request->startDate);
+            $endDate = Carbon::parse($request->endDate);
 
             if($startDate != null && $endDate!= null){
                 if ($startDate > $endDate) {
                     [$startDate, $endDate] = [$endDate, $startDate];
                 }
                 $orders = order::whereBetween('created_at',[$startDate,$endDate])->latest();
+
             }else{
                 $orders = order::whereBetween('created_at', [$firstDayOfCurrentMonth, $lastDayOfLastMonth])->latest();
             }
-
-            if($user_type != 1){
-                $orders = $orders->where('order_status',$user_type)->get();
-            }
+            $orders->where('is_bloked','!=', 0);
+            // if($user_type != 1){
+            //     $orders = $orders->where('order_status',$user_type)->get();
+            // }
 
             return DataTables::of($orders)
             ->addIndexColumn()
@@ -257,7 +260,24 @@ class OrderController extends Controller
                 $createdDate = date('d-m-Y', strtotime($row->created_at));
                 return $createdDate;
             })
+            ->addColumn('block', function ($row)
+            {
+                $user_details =  Auth::guard('admin')->user();
+                $is_bloked = $row->is_bloked;
+                $checked = ($is_bloked == 1) ? 'checked' : '';
+                $checkVal = ($is_bloked == 1) ? 0 : 1;
+                $order_id = isset($row->id) ? $row->id : '';
+                $diabled = ($order_id == 1) ? 'disabled' : '';
+                if($user_details->user_type != 1){
+                    return '-';
+                }else{
+                    return '<div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" onchange="BlockOrder('.$checkVal.','.$order_id.')" id="statusBtn" '.$checked.' '.$diabled.'></div>';
+                }
+
+
+            })
             ->addColumn('actions',function($row){
+                $is_bloked = $row->is_bloked;
                 $orderNo = isset($row->orderno) ? $row->orderno : '';
                 $user_details =  Auth::guard('admin')->user();
                 $user_type = (isset($user_details->user_type)) ? $user_details->user_type : '';
@@ -269,18 +289,47 @@ class OrderController extends Controller
                     $action_html .= '<a href="'.route('reports.order_history_details', $row->id).'" class="btn btn-sm btn-primary rounded-circle me-2"><i class="fa fa-history" aria-hidden="true"></i></a>';
 
                     if($user_type == 1 || $user_type == 2){
+
+                        if($is_bloked == 0){
+                            $action_html .= '<button id="myButton" class="rounded-circle text-danger"disabled><i class="fa fa-ban" aria-hidden="true"></i></button>';
+                        }else{
+                            $action_html .= '<a onclick="blockOrderRecord(\''.$row->id.'\')" class="btn btn-sm btn-danger rounded-circle"><i class="fa fa-ban" aria-hidden="true"></i></a>';
+                        }
                         // $action_html .= '<a onclick="deleteOrderRecord(\''.$orderNo.'\')" class="btn btn-sm btn-danger rounded-circle"><i class="fa fa-trash" aria-hidden="true"></i></a>';
-                        $action_html .= '<a class="btn btn-sm btn-danger rounded-circle"><i class="fa fa-ban" aria-hidden="true"></i></a>';
+
                     }
                 $action_html .= '</div>';
                 return $action_html;
             })
-            ->rawColumns(['actions','order_status', 'SelectOrder','created_date'])
+            ->rawColumns(['actions','order_status', 'SelectOrder','created_date','block'])
             ->make(true);
         }
-       return view('admin.orders.orders');
+       return view('admin.orders.orders',compact(['firstDayOfCurrentMonth','lastDayOfLastMonth','block_reasons']));
     }
 
+    public function blockOrder(Request $request){
+
+        $id = $request->order_id;
+        $reason = $request->blockReason;
+
+        try {
+            $input = order::find($id);
+            $input->block_reason = $reason;
+            $input->is_bloked = 0;
+            $input->update();
+
+            return response()->json([
+                'success' => 1,
+                'message' => "Order has been Block successfully..",
+            ]);
+
+        } catch (\Throwable $th) {
+            return response()->json([
+                'error' => 0,
+                'message' => "Internal Server Error!",
+            ]);
+        }
+    }
     /**
      * Show the form for creating a new resource.
      *
@@ -306,6 +355,7 @@ class OrderController extends Controller
 
            $request->validate([
                 'counter_id' => 'required',
+                'orderno' => 'required|unique:orders',
                 'name' => 'required',
                 'mobile' => 'required|digits:10',
                 'SelectOrder' => 'required',
@@ -333,7 +383,7 @@ class OrderController extends Controller
              //     $orders = order::create($input);
 
             $orders = order::create([
-            'counter_id' => $request->counter_id ,
+             'counter_id' => $request->counter_id,
              'name' => $request->name,
              'mobile' => $request->mobile,
              'SelectOrder' => $request->SelectOrder,
@@ -505,6 +555,41 @@ class OrderController extends Controller
         //
     }
 
+    public function blockOrdersList(Request $request){
+
+        if($request->ajax()){
+
+            $blockOrders = order::where('is_bloked','=',0);
+            return DataTables::of($blockOrders)
+            ->addIndexColumn()
+            ->editColumn('SelectOrder',function($orders){
+
+                if ($orders->SelectOrder == 0) {
+                    return 'New Order';
+                } else  {
+                    return 'Repeat Order';
+                }
+            })
+            ->addColumn('actions',function($row){
+                $is_bloked = $row->is_bloked;
+                $orderNo = isset($row->orderno) ? $row->orderno : '';
+                $user_details =  Auth::guard('admin')->user();
+                $user_type = (isset($user_details->user_type)) ? $user_details->user_type : '';
+
+                $action_html = '';
+                $action_html .= '<div class="d-flex">';
+                    $action_html .= '<a href='.route("order.retrive",["id" => $orderNo ]) .' class="btn btn-sm btn-primary rounded-circle me-2"><i class="fa fa-eye" aria-hidden="true"></i></a>';
+
+                    $action_html .= '<a href="'.route('reports.order_history_details', $row->id).'" class="btn btn-sm btn-primary rounded-circle me-2"><i class="fa fa-history" aria-hidden="true"></i></a>';
+
+                $action_html .= '</div>';
+                return $action_html;
+            })
+            ->rawColumns(['actions','SelectOrder'])
+            ->make(true);
+        }
+        return view('admin.orders.block-orders');
+    }
     /**
      * Remove the specified resource from storage.
      *
@@ -552,6 +637,19 @@ class OrderController extends Controller
     //check for delay time in issue
     private function checkDelay($order_id, $userType, $issue_switch) {
 
+        $current_day = GeneralSetting::where('Days', strtolower(Carbon::now()->format('l')))->first();
+        $office_start_time = (isset($current_day['StartTime']) && !empty($current_day['StartTime'])) ? $current_day['StartTime'] : '11:00:00';
+        $office_end_time = (isset($current_day['EndTime']) && !empty($current_day['EndTime'])) ? $current_day['EndTime'] : '20:00:00';
+        $general_settings = GeneralSetting::where('holiday', 'on')->get();
+
+        $daysArray = [];
+
+        foreach ($general_settings as $setting) {
+            if (isset($setting->Days)) {
+                $daysArray[] = $setting->Days;
+            }
+        }
+
         // Fetch the receive time and other relevant data for the given order_id and userType
         $getOrderhistory = Order_history::with('receivePermission', 'issuePermission' , 'department')
                             ->where('order_id', $order_id)->where('user_type', $userType)->first();
@@ -576,10 +674,48 @@ class OrderController extends Controller
         // // Convert the string to a Carbon instance
         $carbonDate = Carbon::parse($switch_in_date_time);
         $currentDateTime = Carbon::now();
-        $diffrenceOfSwitches = $currentDateTime->diff($carbonDate);
+        $totalDuration = Carbon::parse('00:00:00');
 
+        if ($carbonDate->isSameDay($currentDateTime)) {
+
+            $duration = $carbonDate->diffInMinutes($currentDateTime);
+            $totalDuration->addMinutes($duration);
+
+        } else {
+            // For the start date
+            $startDay = $carbonDate->copy();
+            list($Ehours, $Eminutes, $Eseconds) = sscanf($office_end_time, "%d:%d:%d");
+            $endOfDay = $startDay->copy()->setTime($Ehours, $Eminutes, $Eseconds);
+            $duration = $startDay->diffInMinutes($endOfDay);
+            $totalDuration->addMinutes($duration);
+
+
+            // For the end date
+            $endDay = $currentDateTime->copy();
+            list($Shours, $Sminutes, $Sseconds) = sscanf($office_start_time, "%d:%d:%d");
+            $startOfDay = $endDay->copy()->setTime($Shours, $Sminutes, $Sseconds);
+            $duration = $startOfDay->diffInMinutes($endDay);
+            $totalDuration->addMinutes($duration);
+
+             // For days in between
+            $currentDay = $startDay->copy()->addDay();
+            while ($currentDay->lt($endDay)) {
+                $dayName = strtolower($currentDay->format('l'));
+                if (in_array($dayName, $daysArray)) {
+                    $startTime = $currentDay->copy()->setTime($Shours, $Sminutes, $Sseconds);
+                    $endTime = $currentDay->copy()->setTime($Ehours, $Eminutes, $Eseconds);
+                    $duration = $startTime->diffInMinutes($endTime);
+                    $totalDuration->addMinutes($duration);
+                }
+                $currentDay->addDay();
+            }
+
+
+        }
+
+        $diffrenceOfSwitches = $totalDuration;
         // Check if the current date and time is after the specified date and time
-        $diffrenceOfSwitches = $diffrenceOfSwitches->format('%H:%i:%s');
+        $diffrenceOfSwitches = $diffrenceOfSwitches->format('H:i:s');
         $diffrenceOfSwitches = strtotime($diffrenceOfSwitches);
         $timeFormatted = strtotime($timeFormatted);
 
@@ -619,8 +755,10 @@ class OrderController extends Controller
             $reason = $inputReason;
 
             $userType = Auth::guard('admin')->user()->user_type;
-            $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
-
+            $getOrderhistory= Order_history::where('order_id',$order_id)
+            ->where('user_type',$userType)
+            ->where('user_id',Auth::guard('admin')->user()->id)
+            ->first();
 
             if(isset($getOrderhistory)){
 
@@ -668,7 +806,10 @@ class OrderController extends Controller
             $order_id = $orderdetail->id;
             $userType = Auth::guard('admin')->user()->user_type;
             $workId = $orderdetail->counter_id;
-            $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
+            $getOrderhistory= Order_history::where('order_id',$order_id)
+            ->where('user_type',$userType)
+            ->where('user_id',Auth::guard('admin')->user()->id)
+            ->first();
 
 
             if(empty($getOrderhistory)){
@@ -732,7 +873,10 @@ class OrderController extends Controller
                 $order_id = $orderdetail->id;
                 $userType = Auth::guard('admin')->user()->user_type;
                 $workId = $orderdetail->counter_id;
-                $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
+                $getOrderhistory= Order_history::where('order_id',$order_id)
+                ->where('user_type',$userType)
+                ->where('user_id',Auth::guard('admin')->user()->id)
+                ->first();
 
 
                 if(empty($getOrderhistory)){
@@ -787,8 +931,10 @@ class OrderController extends Controller
                 $order_id = $orderdetail->id;
                 $userType = Auth::guard('admin')->user()->user_type;
                 $workId = $orderdetail->counter_id;
-                $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
-
+                $getOrderhistory= Order_history::where('order_id',$order_id)
+                ->where('user_type',$userType)
+                ->where('user_id',Auth::guard('admin')->user()->id)
+                ->first();
 
                 if(empty($getOrderhistory)){
 
@@ -835,8 +981,12 @@ class OrderController extends Controller
         try{
             $orderdetail = order::where('orderno',$id)->first();
             $order_id = $orderdetail->id;
+            $user_id = Auth::guard('admin')->user()->id;
             $userType = Auth::guard('admin')->user()->user_type;
-            $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
+            $getOrderhistory= Order_history::where('order_id',$order_id)
+            ->where('user_type',$userType)
+            ->where('user_id',Auth::guard('admin')->user()->id)
+            ->first();
             $getPermissionId = Permission::where('name','rec.for.des/cam')->first();
 
             $currentTime = Carbon::now();
@@ -887,7 +1037,10 @@ class OrderController extends Controller
             $orderdetail = order::where('orderno',$id)->first();
             $order_id = $orderdetail->id;
             $userType = Auth::guard('admin')->user()->user_type;
-            $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
+            $getOrderhistory= Order_history::where('order_id',$order_id)
+            ->where('user_type',$userType)
+            ->where('user_id',Auth::guard('admin')->user()->id)
+            ->first();
             $getPermissionId = Permission::where('name','rec.for.waxing')->first();
 
             $currentTime = Carbon::now();
@@ -953,7 +1106,10 @@ class OrderController extends Controller
                 $order_id = $orderdetail->id;
                 $userType = Auth::guard('admin')->user()->user_type;
                 $workId = $orderdetail->counter_id;
-                $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
+                $getOrderhistory= Order_history::where('order_id',$order_id)
+                ->where('user_type',$userType)
+                ->where('user_id',Auth::guard('admin')->user()->id)
+                ->first();
 
 
                 if(empty($getOrderhistory)){
@@ -1000,7 +1156,10 @@ class OrderController extends Controller
             $orderdetail = order::where('orderno',$id)->first();
             $order_id = $orderdetail->id;
             $userType = Auth::guard('admin')->user()->user_type;
-            $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
+            $getOrderhistory= Order_history::where('order_id',$order_id)
+                               ->where('user_type',$userType)
+                               ->where('user_id',Auth::guard('admin')->user()->id)
+                               ->first();
             $getPermissionId = Permission::where('name','rec.for.casting')->first();
 
             $currentTime = Carbon::now();
@@ -1066,7 +1225,10 @@ class OrderController extends Controller
                 $order_id = $orderdetail->id;
                 $userType = Auth::guard('admin')->user()->user_type;
                 $workId = $orderdetail->counter_id;
-                $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
+                $getOrderhistory= Order_history::where('order_id',$order_id)
+                ->where('user_type',$userType)
+                ->where('user_id',Auth::guard('admin')->user()->id)
+                ->first();
 
 
                 if(empty($getOrderhistory)){
@@ -1112,7 +1274,10 @@ class OrderController extends Controller
             $orderdetail = order::where('orderno',$id)->first();
             $order_id = $orderdetail->id;
             $userType = Auth::guard('admin')->user()->user_type;
-            $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
+            $getOrderhistory= Order_history::where('order_id',$order_id)
+            ->where('user_type',$userType)
+            ->where('user_id',Auth::guard('admin')->user()->id)
+            ->first();
             $getPermissionId = Permission::where('name','rec.for.delivery')->first();
 
             $currentTime = Carbon::now();
@@ -1178,7 +1343,10 @@ class OrderController extends Controller
                 $order_id = $orderdetail->id;
                 $userType = Auth::guard('admin')->user()->user_type;
                 $workId = $orderdetail->counter_id;
-                $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
+                $getOrderhistory= Order_history::where('order_id',$order_id)
+                ->where('user_type',$userType)
+                ->where('user_id',Auth::guard('admin')->user()->id)
+                ->first();
 
 
                 if(empty($getOrderhistory)){
@@ -1225,7 +1393,10 @@ class OrderController extends Controller
             $orderdetail = order::where('orderno',$id)->first();
             $order_id = $orderdetail->id;
             $userType = Auth::guard('admin')->user()->user_type;
-            $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
+            $getOrderhistory= Order_history::where('order_id',$order_id)
+                               ->where('user_type',$userType)
+                               ->where('user_id',Auth::guard('admin')->user()->id)
+                               ->first();
             $getPermissionId = Permission::where('name','rec.for.hisab')->first();
 
             $currentTime = Carbon::now();
@@ -1292,7 +1463,10 @@ class OrderController extends Controller
                 $order_id = $orderdetail->id;
                 $userType = Auth::guard('admin')->user()->user_type;
                 $workId = $orderdetail->counter_id;
-                $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
+                $getOrderhistory= Order_history::where('order_id',$order_id)
+                ->where('user_type',$userType)
+                ->where('user_id',Auth::guard('admin')->user()->id)
+                ->first();
 
 
                 if(empty($getOrderhistory)){
@@ -1337,7 +1511,10 @@ class OrderController extends Controller
             $orderdetail = order::where('orderno',$id)->first();
             $order_id = $orderdetail->id;
             $userType = Auth::guard('admin')->user()->user_type;
-            $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
+            $getOrderhistory= Order_history::where('order_id',$order_id)
+            ->where('user_type',$userType)
+            ->where('user_id',Auth::guard('admin')->user()->id)
+            ->first();
             $getPermissionId = Permission::where('name','rec.for.del/cen')->first();
 
             $currentTime = Carbon::now();
@@ -1402,7 +1579,10 @@ class OrderController extends Controller
                 $order_id = $orderdetail->id;
                 $userType = Auth::guard('admin')->user()->user_type;
                 $workId = $orderdetail->counter_id;
-                $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
+                $getOrderhistory= Order_history::where('order_id',$order_id)
+                ->where('user_type',$userType)
+                ->where('user_id',Auth::guard('admin')->user()->id)
+                ->first();
 
 
                 if(empty($getOrderhistory)){
@@ -1450,7 +1630,10 @@ class OrderController extends Controller
             $orderdetail = order::where('orderno',$id)->first();
             $order_id = $orderdetail->id;
             $userType = Auth::guard('admin')->user()->user_type;
-            $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
+            $getOrderhistory= Order_history::where('order_id',$order_id)
+            ->where('user_type',$userType)
+            ->where('user_id',Auth::guard('admin')->user()->id)
+            ->first();
             $getPermissionId = Permission::where('name','rec.for.ready')->first();
 
             $currentTime = Carbon::now();
@@ -1516,7 +1699,10 @@ class OrderController extends Controller
                 $order_id = $orderdetail->id;
                 $userType = Auth::guard('admin')->user()->user_type;
                 $workId = $orderdetail->counter_id;
-                $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
+                $getOrderhistory= Order_history::where('order_id',$order_id)
+                ->where('user_type',$userType)
+                ->where('user_id',Auth::guard('admin')->user()->id)
+                ->first();
 
 
                 if(!$getOrderhistory){
@@ -1564,7 +1750,10 @@ class OrderController extends Controller
             $orderdetail = order::where('orderno',$id)->first();
             $order_id = $orderdetail->id;
             $userType = Auth::guard('admin')->user()->user_type;
-            $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
+            $getOrderhistory= Order_history::where('order_id',$order_id)
+            ->where('user_type',$userType)
+            ->where('user_id',Auth::guard('admin')->user()->id)
+            ->first();
             $getPermissionId = Permission::where('name','rec.for.packing')->first();
 
             $currentTime = Carbon::now();
@@ -1616,7 +1805,10 @@ class OrderController extends Controller
 
             $order_id = $orderdetail->id;
             $userType = Auth::guard('admin')->user()->user_type;
-            $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
+            $getOrderhistory= Order_history::where('order_id',$order_id)
+            ->where('user_type',$userType)
+            ->where('user_id',Auth::guard('admin')->user()->id)
+            ->first();
             $getPermissionId = Permission::where('name','delivery/complete')->first();//
 
                         // $getReceiveTime = isset($getOrderhistory->receive_time) ? Carbon::parse($getOrderhistory->receive_time) : null;
@@ -1651,7 +1843,10 @@ class OrderController extends Controller
 
                 $order_id = $orderdetail->id;
                 $userType = Auth::guard('admin')->user()->user_type;
-                $getOrderhistory= Order_history::where('order_id',$order_id)->where('user_type',$userType)->first();
+                $getOrderhistory= Order_history::where('order_id',$order_id)
+                ->where('user_type',$userType)
+                ->where('user_id',Auth::guard('admin')->user()->id)
+                ->first();
 
                         // $getReceiveTime = isset($getOrderhistory->receive_time) ? Carbon::parse($getOrderhistory->receive_time) : null;
                         // $getCurrentTime = Carbon::now();

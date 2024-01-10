@@ -80,9 +80,9 @@ class AdminController extends Controller
                 $checkVal = ($status == 1) ? 0 : 1;
                 $user_id = isset($row->id) ? $row->id : '';
                 $diabled = ($user_id == 1) ? 'disabled' : '';
-                
+
                 return '<div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" onchange="changeStatus('.$checkVal.','.$user_id.')" id="statusBtn" '.$checked.' '.$diabled.'></div>';
-                   
+
             })
             ->addColumn('actions',function($row)
             {
@@ -183,7 +183,7 @@ class AdminController extends Controller
     // Update existing record
     public function update(UserRequest $request)
     {
-       
+
         try {
 
             $input = $request->except('_token','id','password','confirm_password','image');

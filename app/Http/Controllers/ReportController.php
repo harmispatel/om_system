@@ -303,7 +303,7 @@ class ReportController extends Controller
             $end_date = $request->endDate;
             $department_id = $request->department;
 
-            $order_histories = Order_history::with('receivePermission', 'issuePermission' , 'department');
+            $order_histories = Order_history::with('receivePermission', 'issuePermission' , 'department','order');
             $order_histories = $order_histories->whereNotNull('receive_time')
             ->whereNull('issue_time')
             ->whereNull('switch_type');
@@ -319,7 +319,6 @@ class ReportController extends Controller
             }
 
             $order_histories = $order_histories->get();
-
             return DataTables::of($order_histories)
             ->addIndexColumn()
             ->addColumn('order_no', function ($row) {

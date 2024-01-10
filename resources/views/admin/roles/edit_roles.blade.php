@@ -60,7 +60,7 @@
                                         <div class="col-md-6 mb-3">
                                             <div class="form-group">
                                                 <label for="is_counter" class="form-label">Is_Counter? <span
-                                                        class="text-danger">*</span></label>
+                                                        class="text-danger"></span></label>
                                                 <input type="checkbox" id="is_counter" name="is_counter" value="1" {{ ($role->is_counter = 1) ? 'checked' : '' }}>
                                             </div>
                                         </div>
@@ -202,7 +202,7 @@
                                                             <div id="collapseReport" class="accordion-collapse collapse"
                                                                 aria-labelledby="heading"
                                                                 data-bs-parent="#accordionThirteen">
-                                                            
+
 
                                                                 @foreach ($permission->slice(9, 1) as $value)
                                                                     <div class="accordion-body">
@@ -221,63 +221,6 @@
                                                     </div>
 
                                                 </div>
-                                                <div class="col-md-3">
-                                                    <div class="accordion" id="accordionFive">
-                                                        <div class="accordion-item">
-                                                            <h2 class="accordion-header" id="headingFive">
-                                                                <button class="accordion-button collapsed" type="button"
-                                                                    data-bs-toggle="collapse" data-bs-target="#collapseother"
-                                                                    aria-expanded="false" aria-controls="collapseFive">
-                                                                    Other Permissions
-                                                                </button>
-                                                            </h2>
-                                                            <div id="collapseother" class="accordion-collapse collapse"
-                                                                aria-labelledby="headingFive"
-                                                                data-bs-parent="#accordionFive">
-                                                                @foreach ($permission->slice(10, 15) as $value)
-                                                                <div class="accordion-body">
-                                                                    <label>
-                                                                        <input type="checkbox" name="permission[]"
-                                                                            value="{{ $value->id }}" class="mr-3">
-                                                                        @if($value->name == 'new_order')
-                                                                         New Order
-                                                                        @elseif($value->name == 'repeat_order')
-                                                                         Repeat Order 
-                                                                        @elseif($value->name == 'iss.for.des/cam')
-                                                                        ISS.FOR.DES/CAM
-                                                                        @elseif($value->name == 'rec.for.des/cam')
-                                                                        REC.FOR.DES/CAM
-                                                                        @elseif($value->name == 'qc&iss.for.waxing')
-                                                                        QC & ISS.FOR.WAXING
-                                                                        @elseif($value->name == 'req.for.waxing')
-                                                                        REC.FOR.WAXING
-                                                                        @elseif($value->name == 'qc&iss.for.casting')
-                                                                        QC & ISS.FOR.CASTING
-                                                                        @elseif($value->name == 'req.for.casting')
-                                                                        REC.FOR.CASTING
-                                                                        @elseif($value->name == 'iss.for.hisab')
-                                                                        ISS.FOR.HISAB
-                                                                        @elseif($value->name == 'req.for.hisab')
-                                                                        REC.FOR.HISAB
-                                                                        @elseif($value->name == 'qc&iss.for.del/cen')
-                                                                        QC & ISS.FOR.DEL/CEN
-                                                                        @elseif($value->name == 'req.for.del/cen')
-                                                                        REC.FOR.DEL/CEN
-                                                                        @elseif($value->name == 'iss.for.ready')
-                                                                        ISS.FOR.READY
-                                                                        @elseif($value->name == 'req.for.ready')
-                                                                        REC.FOR.READY
-                                                                        @elseif($value->name == 'delete/complete')
-                                                                        DEL/COMPLATE
-                                                                        @endif
-                                                                    </label>
-                                                                </div>
-                                                                @endforeach
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                               </div>
-                                               
                                                <div class="col-md-3">
                                                 <div class="accordion" id="accordionFive">
                                                     <div class="accordion-item">
@@ -296,37 +239,7 @@
                                                                 <label>
                                                                     <input type="checkbox" name="permission[]"
                                                                         value="{{ $value->id }}" class="mr-3" {{ in_array($value->id, $rolePermissions) ? 'checked' : '' }}>{{$value->name}}
-                                                                     <!-- @if($value->name == 'new_order')
-                                                                     New Order
-                                                                    @elseif($value->name == 'repeat_order')
-                                                                     Repeat Order 
-                                                                    @elseif($value->name == 'iss.for.des/cam')
-                                                                    ISS.FOR.DES/CAM
-                                                                    @elseif($value->name == 'rec.for.des/cam')
-                                                                    REC.FOR.DES/CAM
-                                                                    @elseif($value->name == 'qc&iss.for.waxing')
-                                                                    QC & ISS.FOR.WAXING
-                                                                    @elseif($value->name == 'req.for.waxing')
-                                                                    REC.FOR.WAXING
-                                                                    @elseif($value->name == 'qc&iss.for.casting')
-                                                                    QC & ISS.FOR.CASTING
-                                                                    @elseif($value->name == 'req.for.casting')
-                                                                    REC.FOR.CASTING
-                                                                    @elseif($value->name == 'iss.for.hisab')
-                                                                    ISS.FOR.HISAB
-                                                                    @elseif($value->name == 'req.for.hisab')
-                                                                    REC.FOR.HISAB
-                                                                    @elseif($value->name == 'qc&iss.for.del/cen')
-                                                                    QC & ISS.FOR.DEL/CEN
-                                                                    @elseif($value->name == 'req.for.del/cen')
-                                                                    REC.FOR.DEL/CEN
-                                                                    @elseif($value->name == 'iss.for.ready')
-                                                                    ISS.FOR.READY
-                                                                    @elseif($value->name == 'req.for.ready')
-                                                                    REC.FOR.READY
-                                                                    @else
-                                                                    DEL/COMPLATE
-                                                                    @endif -->
+
                                                                 </label>
                                                             </div>
                                                             @endforeach
@@ -335,17 +248,20 @@
                                                 </div>
                                             </div>
                                             </div>
-                                           
+
                                         </div>
                                     <div class="row mt-2">
                                         <h3>Working Time<span class="text-danger">*</span></h3>
-                                        <label for="working_hours" class="form-label">Hours* 
+                                        <label for="working_hours" class="form-label">Hours*
                                         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Minutes*</label>
                                         <div class="col-md-3 form-group">
-                                         
+
                                             <input
                                                 class="form-control-lg border border-dark {{ $errors->has('working_hours') ? 'is-invalid' : '' }}"
                                                 type="number" name="working_hours" value="{{ isset($role->working_hours) ? $role->working_hours : '' }}"min="1" max="24">
+                                            <input
+                                                class="form-control-lg border border-dark {{ $errors->has('working_minutes') ? 'is-invalid' : '' }}"
+                                                type="number" name="working_minutes" value="{{ isset($role->working_minutes) ? $role->working_minutes : '' }}"min="0" max="59">
                                             @if ($errors->has('working_hours'))
                                             <div class="invalid-feedback">
                                                 {{ $errors->first('working_hours') }}

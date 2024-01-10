@@ -1,11 +1,13 @@
 @php
 
 
+   $blockOrder = $orderdetail->is_bloked;
    $counterId= $orderdetail->counter_id;
    $counterRole = App\Models\Role::first();
    $counterName = App\Models\Role::where('id', $counterId )->first();
    $user_dt = Auth::guard('admin')->user();
     $role_id = $user_dt->user_type;
+    $user_id = $user_dt->id;
     $permissions = App\Models\RoleHasPermissions::where('role_id', $role_id)->pluck('permission_id');
 
     foreach ($permissions as $permission) {
@@ -33,13 +35,14 @@
     $packing1_permission = Spatie\Permission\Models\Permission::where('name', 'rec.for.packing')->first();
     $saleing_permission = Spatie\Permission\Models\Permission::where('name', 'iss.for.saleing')->first();
 
-  $getOrderhistory = App\Models\Order_history::where('user_type',$role_id)->get();
-    foreach($getOrderhistory as $oneRecord){
-        if($orderdetail->id == $oneRecord->order_id)
-        {
-            $oneRecordDate = $oneRecord->receive_time;
+  $getOrderhistory = App\Models\Order_history::where('user_type',$role_id)->where('order_id',$orderdetail->id)->get();
+
+        foreach($getOrderhistory as $value){
+            if($value->receive_time != null && $value->receive_time != ''){
+                $oneRecordDate = $value->receive_time;
+            }
         }
-    }
+
     $getReceiveDate = isset($oneRecordDate) ? $oneRecordDate : '';
     $getPermissionIdValue = session('getPermissionId', null);
     $getOrderDetail = session('orderDetail',null);
@@ -123,9 +126,11 @@
 
         <div class="col-md-12">
             <div class="card m-2 p-2">
+
+            @if($blockOrder == 1)
                 <div class="">
 
-                        @if($user_dt->user_type == $orderdetail->order_status)
+                        @if($user_dt->user_type == $orderdetail->order_status )
 
                             @if(in_array($counter_permission->id,$permission_ids))
                                 <a href="{{route('orders.create')}}" class="btn btn-outline-info text-dark" title="New Order">New Order</a>
@@ -310,7 +315,7 @@
                         @else
                         @endif
                 </div>
-
+            @endif
 
                 <div class="text-end m-2" >
 
@@ -565,9 +570,6 @@ toastr.success('{{ Session::get('success') }}')
 @endif
 
 
-@if(Session::has('lateReceive'))
-   toastr.error('{{Session::get('lateReceive')}}')
-@endif
 // @if (Session::has('error'))
 //     toastr.error('{{ Session::get('error') }}')
 // @endif

@@ -61,8 +61,8 @@
                                         <th>Id</th>
                                         <th>Name</th>
                                         <th>Switches</th>
-                                        <!-- <th>Working Hours</th>
-                                        <th>Actions</th> -->
+                                        <!-- <th>Working Hours</th>-->
+                                        <!-- <th>Actions</th> -->
                                     </tr>
                                 </thead>
                                 <tbody></tbody>

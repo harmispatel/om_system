@@ -32,7 +32,7 @@ class RoleController extends Controller
 
     public function index(Request $request)
     {
-    
+
         if ($request->ajax())
         {
             $roles = Role::with(['permissions'])->get();
@@ -46,13 +46,13 @@ class RoleController extends Controller
                if(count($permissions) > 0)
                {
                     foreach($permissions as $perm){
-                        
+
                         if($perm->id == 1){
                             $permissions_html .= '<span class="badge bg-light text-dark">All Privilege</span>';
                             return $permissions_html;
                         }else{
                             $permissions_html .= '<span class="badge bg-light text-dark me-2">'.$perm['name'].'</span>';
-                            
+
                         }
                     }
                }
@@ -60,7 +60,7 @@ class RoleController extends Controller
             })
             // ->editColumn('working_hours', function ($roles) {
             //     return $roles->working_hours.' : '.$roles->working_minutes;
-            //      }) 
+            //      })
             // ->addColumn('actions',function($row)
             // {
             //     $role_id = isset($row->id) ? encrypt($row->id) : '';
@@ -100,7 +100,7 @@ class RoleController extends Controller
 
     public function create()
     {
-        $permission = Permission::get();    
+        $permission = Permission::get();
 
         $is_counter = Role::get();
 
@@ -109,7 +109,7 @@ class RoleController extends Controller
 
     public function store(Request $request)
     {
-      
+
         $this->validate($request, [
             'name' => 'required|unique:roles,name',
             'permission' => 'required',
@@ -120,8 +120,8 @@ class RoleController extends Controller
             'working_hours.required|max:24|min:1' => 'please enter valid working Hours',
         ]);
     try{
-        $is_counter= isset($request->is_counter) ? 1 : 0 ; 
-       
+        $is_counter= isset($request->is_counter) ? 1 : 0 ;
+
         $role = Role::create(
             [
              'name' => $request->input('name'),
@@ -139,7 +139,7 @@ class RoleController extends Controller
         // $role = Role::create([
         //     'name' => $request->input('name'),
         //     'is_counter' => $checkboxValue,
-            
+
         // ]);
         $role->syncPermissions($request->input('permission'));
 
@@ -167,6 +167,7 @@ class RoleController extends Controller
 
     public function update(Request $request)
     {
+
         $this->validate($request, [
             'name' => 'required',
             'permission' => 'required',
@@ -175,7 +176,7 @@ class RoleController extends Controller
         ]);
 
     try{
-        $is_counter= isset($request->is_counter) ? 1 : 0 ; 
+        $is_counter= isset($request->is_counter) ? 1 : 0 ;
         $id = decrypt($request->id);
 
         $role = Role::find($id);

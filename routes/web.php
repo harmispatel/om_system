@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{AuthController,DashboardController,GeneralSettingController, RoleController, AdminController, OrderController, ReportController,QrCodeController,DompdfController, ReasonController, TaskManageController,types_workController};
+use App\Http\Controllers\{AuthController,DashboardController,GeneralSettingController, RoleController, AdminController, BlockOrderController, OrderController, ReportController,QrCodeController,DompdfController, ReasonController, TaskManageController,types_workController};
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -123,6 +123,8 @@ Route::group(['prefix' => 'admin'], function ()
         route::get('/orders/issue/saleing/{id}',[OrderController::class,'issueForSaleing'])->name('orders.iss.saleing');
         route::post('/orders/issue/late',[OrderController::class,'lateIssue'])->name('late-issue');
         route::post('/orders/receive/late',[OrderController::class,'lateReceive'])->name('late-receive');
+        route::post('/orders/block',[OrderController::class,'blockOrder'])->name('order.block');
+        route::get('/block-orders',[OrderController::class,'blockOrdersList'])->name('orders.blocklist');
         //getdata
         Route::post('/get-data',[OrderController::class,'getData'])->name('getdata');
         Route::get('/fetch-data',[OrderController::class,'fetchdata'])->name('fetchdata');
@@ -158,5 +160,9 @@ Route::group(['prefix' => 'admin'], function ()
         Route::get('/reasons/create',[ReasonController::class,'create'])->name('reasons.create');
         Route::post('/reasons/store',[ReasonController::class,'store'])->name('reasons.store');
 
+        //block order reason
+        route::get('/block-reasons',[BlockOrderController::class,'index'])->name('block-reasons');
+        route::get('/block-reasons/create',[BlockOrderController::class,'create'])->name('block-reasons.create');
+        route::post('/block-reasons/store',[BlockOrderController::class,'store'])->name('block-reasons.store');
     });
 });

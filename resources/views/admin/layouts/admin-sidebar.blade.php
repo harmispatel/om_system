@@ -17,17 +17,24 @@
         </li>
 
         {{-- Orders Nav --}}
-        @if ($user_type == 1 || $user_type == 2)
-            <li class="nav-item">
-                <a class="nav-link {{ $currentRouteName == 'order' ? '' : 'collapsed' }}" href="{{ route('order') }}">
-                    <i class="fa-solid fa-cart-shopping"></i>
-                    <span>Orders</span>
-                </a>
-            </li>
-        @endif
+        <li class="nav-item">
+            <a class="nav-link {{ $currentRouteName == 'order' ? '' : 'collapsed' }}" href="{{ route('order') }}">
+                <i class="fa-solid fa-cart-shopping"></i>
+                <span>Orders</span>
+            </a>
+        </li>
+
 
         {{-- Routes Only for Admin --}}
         @if ($user_type == 1)
+
+            {{-- Blocked Order List --}}
+            <li class="nav-item">
+                <a class="nav-link {{ $currentRouteName == 'orders.blocklist' ? '' : 'collapsed' }}" href="{{route('orders.blocklist')}}">
+                    <i class="fas fa-ban"></i>
+                    <span>Blocked Orders</span>
+                </a>
+            </li>
 
             {{-- Task Management Nav --}}
             <li class="nav-item">
@@ -42,6 +49,13 @@
                 <a class="nav-link {{ $currentRouteName == 'reasons' ? '' : 'collapsed' }}" href="{{route('reasons')}}">
                     <i class="fa-solid fa-business-time"></i>
                     <span>Delay Time Reasons</span>
+                </a>
+            </li>
+            {{-- Reasons for block Order --}}
+            <li class="nav-item">
+                <a class="nav-link {{ $currentRouteName == 'block-reasons' ? '' : 'collapsed' }}" href="{{route('block-reasons')}}">
+                    <i class="fa-solid fa-business-time"></i>
+                    <span>Reason For Block-Order</span>
                 </a>
             </li>
 

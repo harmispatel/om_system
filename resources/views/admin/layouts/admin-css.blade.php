@@ -84,3 +84,41 @@
         border: 1px solid #ced4da!important;
     }
 </style>
+<style>
+    /* Popup container */
+.popup {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.7);
+}
+
+/* Popup content */
+.popup-content {
+    position: relative;
+    margin: 15% auto;
+    padding: 20px;
+    width: 40%;
+    background-color: #fff;
+    border-radius: 8px;
+}
+
+/* Close button */
+.close {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    cursor: pointer;
+}
+
+/* Style for the submit button */
+#submitValue {
+    margin-top: 10px;
+}
+
+</style>
