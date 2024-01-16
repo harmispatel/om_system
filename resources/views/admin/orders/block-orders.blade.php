@@ -39,7 +39,7 @@
                                         <th scope="col">Phone</th>
                                         <th scope="col">Order Type</th>
                                         <th scope="col">Block Reason</th>
-                                        <th scope="col">Handle By</th>
+                                        <th scope="col">Who's Block Order</th>
                                         <th scope="col">Actions</th>
                                     </tr>
                                 </thead>
@@ -89,8 +89,8 @@
                     name:'block_reason'
                 },
                 {
-                    data: 'handleby',
-                    name: 'handleby',
+                    data: 'who_block_order',
+                    name: 'who_block_order',
                 },
                 {
                     data: 'actions',

@@ -29,25 +29,29 @@ class ReasonController extends Controller
         ->rawColumns(['department'])
         ->make(true);
     }
-     $departments = Role::whereNotIn('name', ['COUNTER', 'DELIVERY'])->get();
+     $departments = Role::get();
      return view('admin.Reason.index',compact('departments'));
    }
    public function create(){
 
-        $departments = Role::whereNotIn('name', ['COUNTER', 'DELIVERY'])->get();
+        $departments = Role::get();
         return view('admin.Reason.create',compact('departments'));
    }
 
    public function store(Request $request){
+
        $request->validate([
          'department' => 'required',
           'reason'  => 'required'
        ]);
+
        $getNameOfDep = Role::where('id',$request->department)->first();
-     try{
+
+    try{
 
         $input = $request->except('_token');
         $storeReason = Reason::create($input);
+
         return redirect()->route('reasons.create')->with('success','Added SuccessFully Reason For '.$getNameOfDep->name);
      }catch(\Throwable $th){
         return redirect()->route('reasons.create')->with('error','Internal Server Error!');

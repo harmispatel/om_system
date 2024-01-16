@@ -137,6 +137,8 @@ Route::group(['prefix' => 'admin'], function ()
         Route::get('reports/typesofworks-pending/', [ReportController::class,'typesOfWorksPendingReport'])->name('reports.typesofworks_pending');
         Route::get('reports/order-history/trassed',[ReportController::class,'trassedOrders'])->name('reports.trassed');
         Route::get('reports/department-performance/', [ReportController::class,'departmentPerformanceReport'])->name('reports.performance');
+        Route::get('reports/delay-reason/', [ReportController::class,'delayReasonReport'])->name('reports.delayreason');
+        Route::get('reports/delay-reason/receive', [ReportController::class,'delayReceiveReasonReport'])->name('reports.delayreceivereason');
 
         //qrpage
 

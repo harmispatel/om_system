@@ -9,7 +9,7 @@ use App\Models\order;
 use App\Models\orderimage;
 use App\Models\hadleby;
 use App\Models\customer_name;
-use App\Models\{Block_reason, Order_history, Reason, Task_manage};
+use App\Models\{Block_reason, Order_history, Reason, Task_manage,Admin};
 use App\Models\types_work;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Http\Request;
@@ -311,11 +311,13 @@ class OrderController extends Controller
 
         $id = $request->order_id;
         $reason = $request->blockReason;
+        $u_id = Auth::guard('admin')->user()->id;
 
         try {
             $input = order::find($id);
             $input->block_reason = $reason;
             $input->is_bloked = 0;
+            $input->whos_block_order = $u_id;
             $input->update();
 
             return response()->json([
@@ -562,6 +564,12 @@ class OrderController extends Controller
             $blockOrders = order::where('is_bloked','=',0);
             return DataTables::of($blockOrders)
             ->addIndexColumn()
+            ->addColumn('who_block_order',function($row){
+                $get_userdetail = Admin::where('id',$row->whos_block_order)->first();
+                $firstname = isset($get_userdetail->firstname) ? $get_userdetail->firstname:'';
+                $lastname = isset($get_userdetail->lastname) ? $get_userdetail->lastname:'';
+                return $firstname . $lastname;
+            })
             ->editColumn('SelectOrder',function($orders){
 
                 if ($orders->SelectOrder == 0) {

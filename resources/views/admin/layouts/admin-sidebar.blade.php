@@ -28,14 +28,6 @@
         {{-- Routes Only for Admin --}}
         @if ($user_type == 1)
 
-            {{-- Blocked Order List --}}
-            <li class="nav-item">
-                <a class="nav-link {{ $currentRouteName == 'orders.blocklist' ? '' : 'collapsed' }}" href="{{route('orders.blocklist')}}">
-                    <i class="fas fa-ban"></i>
-                    <span>Blocked Orders</span>
-                </a>
-            </li>
-
             {{-- Task Management Nav --}}
             <li class="nav-item">
                 <a class="nav-link {{ $currentRouteName == 'task-management' ? '' : 'collapsed' }}" href="{{route('task-manage.list')}}">
@@ -87,13 +79,13 @@
 
         {{-- Reports Nav --}}
         <li class="nav-item">
-            <a class="nav-link {{ $currentRouteName == 'reports.order_history' || $currentRouteName == 'reports.typeofwork' ||  $currentRouteName == 'reports.department_pending_orders' || $currentRouteName == 'reports.performance' || Route::currentRouteName() == 'reports.order_history_details' ||  Route::currentRouteName() == 'reports.typesofworks_pending' ?  '' :'collapsed'}} " data-bs-target="#reports-nav"
+            <a class="nav-link {{ $currentRouteName == 'reports.order_history' || $currentRouteName == 'reports.typeofwork' ||  $currentRouteName == 'reports.department_pending_orders' || $currentRouteName == 'reports.performance' || Route::currentRouteName() == 'reports.order_history_details' ||  Route::currentRouteName() == 'reports.typesofworks_pending' || Route::currentRouteName() == 'orders.blocklist' || Route::currentRouteName() == 'reports.delayreason' ?  '' :'collapsed'}} " data-bs-target="#reports-nav"
             data-bs-toggle="collapse" href="#" aria-expanded="{{ Route::currentRouteName() == 'reports' ? 'true' : 'false'}}">
                 <i class="fa fa-solid fa-file {{Route::currentRouteName() == 'reports' ? 'icon-tab':''}}"></i><span>Reports</span>
                 <i class="bi bi-chevron-down ms-auto {{Route::currentRouteName() == 'reports' ? 'icon-tab':''}}"></i>
 
             </a>
-            <ul id="reports-nav" class="nav-content sidebar-ul collapse {{ (Route::currentRouteName() == 'reports.order_history' || Route::currentRouteName() == 'reports.department_pending_orders' || $currentRouteName == 'reports.performance' || Route::currentRouteName() == 'reports.order_history_details' ||  Route::currentRouteName() == 'reports.typesofworks_pending') ? 'show':''}}" data-bs-parent="#sidebar-nav">
+            <ul id="reports-nav" class="nav-content sidebar-ul collapse {{ (Route::currentRouteName() == 'reports.order_history' || Route::currentRouteName() == 'reports.department_pending_orders' || $currentRouteName == 'reports.performance' || Route::currentRouteName() == 'reports.order_history_details' ||  Route::currentRouteName() == 'reports.typesofworks_pending' || Route::currentRouteName() == 'orders.blocklist' || Route::currentRouteName() == 'reports.delayreason') ? 'show':''}}" data-bs-parent="#sidebar-nav">
                 <li>
                     <a href="{{route('reports.order_history')}}" class="{{ (Route::currentRouteName() == 'reports.order_history' || Route::currentRouteName() == 'reports.order_history_details') ? 'active': '' }}">
                         <i class="bi bi-circle {{Route::currentRouteName() == 'reports.order_history' ? 'bi bi-circle-fill' : 'bi bi-circle'}}"></i><span>Order History
@@ -120,6 +112,20 @@
                     <a href="{{route('reports.performance')}}" class="{{Route::currentRouteName() == 'reports.performance' ? 'active':''}}">
                         <i class="bi bi-circle {{Route::currentRouteName() == 'reports.performance' ? 'bi bi-circle-fill' : 'bi bi-circle'}}"></i><span>Department Performance
                         </span>
+                    </a>
+                </li>
+
+                <li>
+                    <a href="{{route('reports.delayreason')}}" class="{{Route::currentRouteName() == 'reports.delayreason' ? 'active':''}}">
+                        <i class="bi bi-circle {{Route::currentRouteName() == 'reports.delayreason' ? 'bi bi-circle-fill' : 'bi bi-circle'}}"></i><span>Delay-Reason Report
+                        </span>
+                    </a>
+                </li>
+
+                 <li>
+                    <a class="{{Route::currentRouteName() == 'orders.blocklist' ? 'active':''}}" href="{{route('orders.blocklist')}}">
+                         <i class="bi bi-circle {{Route::currentRouteName() == 'orders.blocklist' ? 'bi bi-circle-fill' : 'bi bi-circle'}}"></i>
+                        <span>Blocked Orders</span>
                     </a>
                 </li>
             </ul>

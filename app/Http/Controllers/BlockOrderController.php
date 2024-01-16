@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Block_reason;
+use App\Models\{Block_reason,Admin};
 use Yajra\DataTables\Facades\DataTables;
 use Illuminate\Http\Request;
 

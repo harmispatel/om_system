@@ -41,9 +41,15 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="card-title">
-                            <label class="me-2">Order No.</label>
-                            <input type="text" id="order_number" name="order_number" class="rounded me-2 w-50" placeholder="Enter Order Number to Search Your Order">
-                            <button id="searchBtn" class="btn btn-dark btn-sm">Search</button>
+                           <div class="row">
+                                <div class="col-md-5">
+                                    <label class="me-2">Order No.</label>
+                                    <input type="text" id="order_number" name="order_number" class="rounded me-2 form-control" placeholder="Enter Order Number to Search Your Order">
+                                </div>
+                                <div class="col-md-1">
+                                    <button id="searchBtn" class="btn btn-dark mt-4"><i class="fa fa-search" aria-hidden="true"></i></button>
+                                </div>
+                           </div>
                         </div>
                         <div class="table-responsive custom_dt_table">
                             <table class="table w-100" id="OrderHistoryReportTable">

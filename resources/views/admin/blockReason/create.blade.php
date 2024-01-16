@@ -3,12 +3,7 @@
 Reasons Of Delay-Time
 @endsection
 @section('content')
-<!-- @if(Session::has('success'))
-<div class="alert alert-info alert-dismissible fade show" role="alert">
-    <strong>{{ Session::get('success') }}</strong>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-@endif -->
+
 <div class="pagetitle">
     <h1>Create Block Reasons</h1>
     <div class="row">
