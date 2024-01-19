@@ -624,8 +624,6 @@ class ReportController extends Controller
                 }
             }
             $countAllResult = count($order_history);
-            $successCount = 0;
-
             return DataTables::of($order_history)
                 ->addIndexColumn()
                 ->addColumn('order_no', function ($row) {
@@ -766,7 +764,7 @@ class ReportController extends Controller
                         if ($diffrenceOfSwitches > $timeFormatted) {
                             return '<span style="color: red;">'.$durationDay.' Days '.$durationHours .' Hours '. $durationMinutes.' Minutes '. '</span>';
                         }else{
-                            return '<span style="color: green;">'.$durationDay .' Days '.$durationHours .' Hours '. $durationMinutes.' Minutes '. '</span>';
+                            return '<span class="success" style="color: green;">'.$durationDay .' Days '.$durationHours .' Hours '. $durationMinutes.' Minutes '. '</span>';
                         }
                      }
                     return $totalDuration;
@@ -777,7 +775,6 @@ class ReportController extends Controller
                 })
                 ->rawColumns(['inswitch_time', 'outswitch_time', 'duration', 'order_no', 'created_date','mobile_no','customer_name'])
                 ->with('countAllResult', $countAllResult)
-                ->with('successCount', $successCount)
                 ->make(true);
 
         }

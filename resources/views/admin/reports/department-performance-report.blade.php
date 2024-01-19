@@ -62,9 +62,10 @@
                              <div class="col-md-1">
                                 <button id="search" class="btn custom-btn mt-4"><i class="fa fa-search"></i></i></button>
                              </div>
+
                             <div class="col-md-6 mt-3" >
                                 <label>Performance : </label>
-                                <input type="text" class="rounded-circle" style="width:50px; height:50px;" value="50%"disabled>
+                                <input type="text" id="performanceInput" class="rounded-circle text-center" style="width:100px; height:50px;" value=""disabled>
                             </div>
                         </div>
                     </div>
@@ -98,11 +99,31 @@
 
 <script type="text/javascript">
 
+function updateCounts() {
+    var table = $('#PerformanceTable').DataTable();
 
+    // Get information about the table
+    var pageInfo = table.page.info();
+
+    // Total records count
+    var totalRecords = pageInfo.recordsTotal;
+
+    // Success count
+    var successCount = $('.success').length;
+
+    // Calculate success percentage
+    var successPercentage = totalRecords > 0 ? (successCount / totalRecords) * 100 : 0;
+
+    // Update your UI or console.log the counts and percentage
+    console.log('Total Records:', totalRecords);
+    console.log('Success Count:', successCount);
+    console.log('Success Percentage:', successPercentage.toFixed(2) + '%');
+     $('#performanceInput').val(successPercentage.toFixed(2) + '%');
+}
     $(function() {
 
         var table = $('#PerformanceTable').DataTable({
-        paging:true,
+        paging:false,
         processing: true,
         serverSide: true,
         pageLength: 25,
@@ -116,9 +137,19 @@
         },
         initComplete: function(settings, json) {
             var countAllResult = json.countAllResult;
-            var successCount = json.successCount;
-            console.log(successCount);
-            console.log(countAllResult);
+            var pageInfo = table.page.info();
+            var totalRecords = pageInfo.recordsTotal;
+
+            var successCount = $('.success').length;
+            console.log('Success Count:', successCount);
+            var successPercentage = (successCount / totalRecords) * 100;
+
+
+            // Total records count
+            console.log('Success Records: ' + successCount);
+            console.log('Total Records: ' + totalRecords);
+            console.log('Success Percentage: ' + successPercentage + '%');
+            $('#performanceInput').val(successPercentage.toFixed(2) + '%');
         },
         columns: [
             { data: 'DT_RowIndex', 'orderable': false, 'searchable': false },
@@ -153,6 +184,11 @@
         ]
     });
 
+        table.on('draw', function () {
+            updateCounts();
+        });
+
+        updateCounts();
         $('#department').on('change', function() {
             table.ajax.reload(); // Redraw the DataTable with the new filter
         });
