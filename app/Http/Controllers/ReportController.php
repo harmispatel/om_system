@@ -20,7 +20,6 @@ use PhpParser\Node\Stmt\Return_;
 
 class ReportController extends Controller
 {
-
     // Function for Get Report for Order History
     public function orderHistoryReport(Request $request)
     {
@@ -170,141 +169,151 @@ class ReportController extends Controller
             //     }
             //     return $diff;
             // })
-            ->addColumn('duration', function ($row) {
+            // ->addColumn('duration', function ($row) {
 
-                $getOfficeTime = GeneralSetting::first();
-                $officeStartTime = Carbon::parse($getOfficeTime->StartTime ?? '11:00:00');
-                $officeEndTime = Carbon::parse($getOfficeTime->EndTime ?? '20:00:00');
-                $officeDurationInSeconds = $officeEndTime->diffInSeconds($officeStartTime);
+            //     $getOfficeTime = GeneralSetting::first();
+            //     $officeStartTime = Carbon::parse($getOfficeTime->StartTime ?? '11:00:00');
+            //     $officeEndTime = Carbon::parse($getOfficeTime->EndTime ?? '20:00:00');
+            //     $officeDurationInSeconds = $officeEndTime->diffInSeconds($officeStartTime);
 
-                $task_details = Task_manage::where('types_of_works', $row->typesofwork_id)
-                    ->where('task1_id', $row->receive_switch)
-                    ->where('task2_id', $row->switch_type)
-                    ->first();
+            //     $task_details = Task_manage::where('types_of_works', $row->typesofwork_id)
+            //         ->where('task1_id', $row->receive_switch)
+            //         ->where('task2_id', $row->switch_type)
+            //         ->first();
 
-                $taskHours = $task_details->working_hours ?? 0;
-                $taskMinutes = $task_details->working_minutes ?? 0;
-                $taskSeconds = $task_details->working_seconds ?? 0;
+            //     $taskHours = $task_details->working_hours ?? 0;
+            //     $taskMinutes = $task_details->working_minutes ?? 0;
+            //     $taskSeconds = $task_details->working_seconds ?? 0;
 
-                $formattedTimeInSeconds = $taskHours * 3600 + $taskMinutes * 60 + $taskSeconds;
-                $if_not_issue = isset($row->issue_time) ? true : false;
-                $startDateTime = Carbon::parse($row->receive_time ?? Carbon::now());
-                $endDateTime = Carbon::parse($row->issue_time ?? Carbon::now());
+            //     $formattedTimeInSeconds = $taskHours * 3600 + $taskMinutes * 60 + $taskSeconds;
+            //     $if_not_issue = isset($row->issue_time) ? true : false;
+            //     $startDateTime = Carbon::parse($row->receive_time ?? Carbon::now());
+            //     $endDateTime = Carbon::parse($row->issue_time ?? Carbon::now());
 
-                $differenceInSeconds = $endDateTime->diffInSeconds($startDateTime);
+            //     $differenceInSeconds = $endDateTime->diffInSeconds($startDateTime);
 
-                if ($differenceInSeconds > $officeDurationInSeconds) {
-                    $adjustedDifferenceInSeconds = $differenceInSeconds - $officeDurationInSeconds;
-                    $countableTime = Carbon::createFromTimestamp($adjustedDifferenceInSeconds)->setTimezone('UTC');
+            //     if ($differenceInSeconds > $officeDurationInSeconds) {
+            //         $adjustedDifferenceInSeconds = $differenceInSeconds - $officeDurationInSeconds;
+            //         $countableTime = Carbon::createFromTimestamp($adjustedDifferenceInSeconds)->setTimezone('UTC');
 
-                    $days = floor($countableTime->day - 1); // subtracting 1 because day is 1-based
-                    $hours = floor($countableTime->hour);
-                    $minutes = floor($countableTime->minute);
-                    $result = sprintf('%d days %d hours %d minutes', $days, $hours, $minutes);
-                    if($if_not_issue == false){
-                        return '<span style="color: black;">' . $endDateTime->diff($startDateTime)->format('%d days %h hours %i minute') . '</span>';
-                    }else{
-                        if ($adjustedDifferenceInSeconds >= $formattedTimeInSeconds) {
-                            return '<span style="color: red;">' . $result . '</span>';
-                        } else {
-                            return '<span style="color: green;">' . $result . '</span>';
-                        }
+            //         $days = floor($countableTime->day - 1); // subtracting 1 because day is 1-based
+            //         $hours = floor($countableTime->hour);
+            //         $minutes = floor($countableTime->minute);
+            //         $result = sprintf('%d days %d hours %d minutes', $days, $hours, $minutes);
+            //         if($if_not_issue == false){
+            //             return '<span style="color: black;">' . $endDateTime->diff($startDateTime)->format('%d days %h hours %i minute') . '</span>';
+            //         }else{
+
+            //             if ($adjustedDifferenceInSeconds >= $formattedTimeInSeconds) {
+            //                 return '<span style="color: red;">' . $result . '</span>';
+            //             } else {
+            //                 return '<span style="color: green;">' . $result . '</span>';
+            //             }
+            //         }
+            //     }
+            //     if($if_not_issue == false){
+            //         return '<span style="color: black;">' . $endDateTime->diff($startDateTime)->format('%d days %h hours %i minute') . '</span>';
+            //     }else{
+
+            //         if ($differenceInSeconds >= $formattedTimeInSeconds) {
+            //             return '<span style="color: red;">' . $endDateTime->diff($startDateTime)->format('%d days %h hours %i minute') . '</span>';
+            //         } else {
+            //             return '<span style="color: green;">' . $endDateTime->diff($startDateTime)->format('%d days %h hours %i minute') . '</span>';
+            //         }
+            //     }
+            // })
+            ->addColumn('duration',function($row){
+
+                $current_day = GeneralSetting::where('Days', strtolower(Carbon::now()->format('l')))->first();
+                $office_start_time = (isset($current_day['StartTime']) && !empty($current_day['StartTime'])) ? $current_day['StartTime'] : '11:00:00';
+                $office_end_time = (isset($current_day['EndTime']) && !empty($current_day['EndTime'])) ? $current_day['EndTime'] : '20:00:00';
+                $general_settings = GeneralSetting::where('holiday', 'on')->get();
+
+                $daysArray = [];
+
+                foreach ($general_settings as $setting) {
+                    if (isset($setting->Days)) {
+                        $daysArray[] = $setting->Days;
                     }
                 }
-            if($if_not_issue == false){
-                return '<span style="color: black;">' . $endDateTime->diff($startDateTime)->format('%d days %h hours %i minute') . '</span>';
-            }else{
-                if ($differenceInSeconds >= $formattedTimeInSeconds) {
-                    return '<span style="color: red;">' . $endDateTime->diff($startDateTime)->format('%d days %h hours %i minute') . '</span>';
+                $taskdetails = Task_manage::where('types_of_works', $row->typesofwork_id)
+                                            ->where('task1_id', $row->receive_switch)
+                                            ->where('task2_id', $row->switch_type)
+                                            ->first();
+                $working_hours = (isset($taskdetails['working_hours'])) ? $taskdetails['working_hours'] : 00;
+                $working_minutes = (isset($taskdetails['working_minutes'])) ? $taskdetails['working_minutes'] : 00;
+                $working_seconds = (isset($taskdetails['working_seconds'])) ? $taskdetails['working_seconds'] : 00;
+                $timeFormatted = sprintf(
+                    "%02d:%02d:%02d",
+                    $working_hours,
+                    $working_minutes,
+                    $working_seconds
+                );
+
+                $carbonDate = Carbon::parse($row->receive_time ?? Carbon::now());
+                $currentDateTime = Carbon::parse($row->issue_time ?? Carbon::now());
+                $if_not_issue = isset($row->issue_time) ? true : false;
+                $totalDuration = Carbon::parse('00:00:00');
+
+                if ($carbonDate->isSameDay($currentDateTime)) {
+
+                    $duration = $carbonDate->diffInMinutes($currentDateTime);
+                    $totalDuration->addMinutes($duration);
+
                 } else {
-                    return '<span style="color: green;">' . $endDateTime->diff($startDateTime)->format('%d days %h hours %i minute') . '</span>';
+                    // For the start date
+                    $startDay = $carbonDate->copy();
+                    list($Ehours, $Eminutes, $Eseconds) = sscanf($office_end_time, "%d:%d:%d");
+                    $endOfDay = $startDay->copy()->setTime($Ehours, $Eminutes, $Eseconds);
+                    $duration = $startDay->diffInMinutes($endOfDay);
+                    $totalDuration->addMinutes($duration);
+
+
+                    // For the end date
+                    $endDay = $currentDateTime->copy();
+                    list($Shours, $Sminutes, $Sseconds) = sscanf($office_start_time, "%d:%d:%d");
+                    $startOfDay = $endDay->copy()->setTime($Shours, $Sminutes, $Sseconds);
+                    $duration = $startOfDay->diffInMinutes($endDay);
+                    $totalDuration->addMinutes($duration);
+
+                     // For days in between
+                    $currentDay = $startDay->copy()->addDay();
+                    while ($currentDay->lt($endDay)) {
+                        $dayName = strtolower($currentDay->format('l'));
+                        if (in_array($dayName, $daysArray)) {
+                            $startTime = $currentDay->copy()->setTime($Shours, $Sminutes, $Sseconds);
+                            $endTime = $currentDay->copy()->setTime($Ehours, $Eminutes, $Eseconds);
+                            $duration = $startTime->diffInMinutes($endTime);
+                            $totalDuration->addMinutes($duration);
+                        }
+                        $currentDay->addDay();
+                    }
+
+
                 }
-            }
+
+                $interval = carbon::now()->diff($totalDuration);
+                $durationDay = $interval->days;
+                $durationHours = $totalDuration->hour;
+                $durationMinutes = $totalDuration->minute;
+                $diffrenceOfSwitches = $totalDuration;
+
+                // Check if the current date and time is after the specified date and time
+                $diffrenceOfSwitches = $diffrenceOfSwitches->format('H:i:s');
+                $diffrenceOfSwitches = strtotime($diffrenceOfSwitches);
+                $timeFormatted = strtotime($timeFormatted);
+
+                if($if_not_issue == false){
+                     return '<span style="color: black;">'.$durationDay.' Days '.$durationHours .' Hours '. $durationMinutes.' Minutes '. '</span>';
+                }else{
+                    if ($diffrenceOfSwitches > $timeFormatted) {
+                        return '<span style="color: red;">'.$durationDay.' Days '.$durationHours .' Hours '. $durationMinutes.' Minutes '. '</span>';
+                    }else{
+                        return '<span style="color: green;">'.$durationDay .' Days '.$durationHours .' Hours '. $durationMinutes.' Minutes '. '</span>';
+                    }
+                 }
+                return $totalDuration;
             })
-            //   ->addColumn('duration',function($row){
-
-            //     $current_day = GeneralSetting::where('Days', strtolower(Carbon::now()->format('l')))->first();
-            //     $office_start_time = (isset($current_day['StartTime']) && !empty($current_day['StartTime'])) ? $current_day['StartTime'] : '11:00:00';
-            //     $office_end_time = (isset($current_day['EndTime']) && !empty($current_day['EndTime'])) ? $current_day['EndTime'] : '20:00:00';
-            //     $general_settings = GeneralSetting::where('holiday', 'on')->get();
-
-            //     $daysArray = [];
-
-            //     foreach ($general_settings as $setting) {
-            //         if (isset($setting->Days)) {
-            //             $daysArray[] = $setting->Days;
-            //         }
-            //     }
-            //     $taskdetails = Task_manage::where('types_of_works', $row->typesofwork_id)
-            //                                 ->where('task1_id', $row->receive_switch)
-            //                                 ->where('task2_id', $row->switch_type)
-            //                                 ->first();
-            //     $working_hours = (isset($taskdetails['working_hours'])) ? $taskdetails['working_hours'] : 00;
-            //     $working_minutes = (isset($taskdetails['working_minutes'])) ? $taskdetails['working_minutes'] : 00;
-            //     $working_seconds = (isset($taskdetails['working_seconds'])) ? $taskdetails['working_seconds'] : 00;
-            //     $timeFormatted = sprintf(
-            //         "%02d:%02d:%02d",
-            //         $working_hours,
-            //         $working_minutes,
-            //         $working_seconds
-            //     );
-
-            //     $carbonDate = Carbon::parse($row->receive_time ?? Carbon::now());
-            //     $currentDateTime = Carbon::parse($row->issue_time ?? Carbon::now());
-            //     $totalDuration = Carbon::parse('00:00:00');
-
-            //     if ($carbonDate->isSameDay($currentDateTime)) {
-
-            //         $duration = $carbonDate->diffInMinutes($currentDateTime);
-            //         $totalDuration->addMinutes($duration);
-
-            //     } else {
-            //         // For the start date
-            //         $startDay = $carbonDate->copy();
-            //         list($Ehours, $Eminutes, $Eseconds) = sscanf($office_end_time, "%d:%d:%d");
-            //         $endOfDay = $startDay->copy()->setTime($Ehours, $Eminutes, $Eseconds);
-            //         $duration = $startDay->diffInMinutes($endOfDay);
-            //         $totalDuration->addMinutes($duration);
-
-
-            //         // For the end date
-            //         $endDay = $currentDateTime->copy();
-            //         list($Shours, $Sminutes, $Sseconds) = sscanf($office_start_time, "%d:%d:%d");
-            //         $startOfDay = $endDay->copy()->setTime($Shours, $Sminutes, $Sseconds);
-            //         $duration = $startOfDay->diffInMinutes($endDay);
-            //         $totalDuration->addMinutes($duration);
-
-            //          // For days in between
-            //         $currentDay = $startDay->copy()->addDay();
-            //         while ($currentDay->lt($endDay)) {
-            //             $dayName = strtolower($currentDay->format('l'));
-            //             if (in_array($dayName, $daysArray)) {
-            //                 $startTime = $currentDay->copy()->setTime($Shours, $Sminutes, $Sseconds);
-            //                 $endTime = $currentDay->copy()->setTime($Ehours, $Eminutes, $Eseconds);
-            //                 $duration = $startTime->diffInMinutes($endTime);
-            //                 $totalDuration->addMinutes($duration);
-            //             }
-            //             $currentDay->addDay();
-            //         }
-
-
-            //     }
-
-            //     $diffrenceOfSwitches = $totalDuration;
-
-            //     // Check if the current date and time is after the specified date and time
-            //     $diffrenceOfSwitches = $diffrenceOfSwitches->format('H:i:s');
-            //     $diffrenceOfSwitches = strtotime($diffrenceOfSwitches);
-            //     $timeFormatted = strtotime($timeFormatted);
-
-            //         if ($diffrenceOfSwitches > $timeFormatted) {
-            //             return $totalDuration .'RED';
-            //         }else{
-            //             return $totalDuration . 'green';
-            //         }
-
-            //     return $totalDuration;
-            //   })
             ->rawColumns([
                 'index',
                 'order_no',
@@ -615,8 +624,7 @@ class ReportController extends Controller
                 }
             }
             $countAllResult = count($order_history);
-            $completeUnderTime = 0;
-            $performancePercentage = 0;
+            $successCount = 0;
 
             return DataTables::of($order_history)
                 ->addIndexColumn()
@@ -645,6 +653,7 @@ class ReportController extends Controller
                     }
 
                     $PermissionName = isset($row->receivePermission) ? $row->receivePermission->name : '';
+
                     $outswitch_html = '<div class="row" style="font-size:20px;">';
                     $outswitch_html .=  '<span>' . $PermissionName . '</span>';
                     $outswitch_html .= '</div>';
@@ -670,58 +679,105 @@ class ReportController extends Controller
                     $outswitch_html .= '</div>';
                     return $outswitch_html;
                 })
-                ->addColumn('duration', function ($row) use($completeUnderTime) {
+                ->addColumn('duration',function($row){
 
-                    $getOfficeTime = GeneralSetting::first();
-                    $officeStartTime = Carbon::parse($getOfficeTime->StartTime ?? '11:00:00');
-                    $officeEndTime = Carbon::parse($getOfficeTime->EndTime ?? '20:00:00');
-                    $officeDurationInSeconds = $officeEndTime->diffInSeconds($officeStartTime);
+                    $current_day = GeneralSetting::where('Days', strtolower(Carbon::now()->format('l')))->first();
+                    $office_start_time = (isset($current_day['StartTime']) && !empty($current_day['StartTime'])) ? $current_day['StartTime'] : '11:00:00';
+                    $office_end_time = (isset($current_day['EndTime']) && !empty($current_day['EndTime'])) ? $current_day['EndTime'] : '20:00:00';
+                    $general_settings = GeneralSetting::where('holiday', 'on')->get();
 
-                    $task_details = Task_manage::where('types_of_works', $row->typesofwork_id)
-                        ->where('task1_id', $row->receive_switch)
-                        ->where('task2_id', $row->switch_type)
-                        ->first();
+                    $daysArray = [];
 
-                    $taskHours = $task_details->working_hours ?? 0;
-                    $taskMinutes = $task_details->working_minutes ?? 0;
-                    $taskSeconds = $task_details->working_seconds ?? 0;
-
-                    $formattedTimeInSeconds = $taskHours * 3600 + $taskMinutes * 60 + $taskSeconds;
-
-                    $startDateTime = Carbon::parse($row->receive_time ?? Carbon::now());
-                    $endDateTime = Carbon::parse($row->issue_time ?? Carbon::now());
-
-                    $differenceInSeconds = $endDateTime->diffInSeconds($startDateTime);
-
-                    if ($differenceInSeconds > $officeDurationInSeconds) {
-                        $adjustedDifferenceInSeconds = $differenceInSeconds - $officeDurationInSeconds;
-                        $countableTime = Carbon::createFromTimestamp($adjustedDifferenceInSeconds)->setTimezone('UTC');
-
-                        $days = floor($countableTime->day - 1); // subtracting 1 because day is 1-based
-                        $hours = floor($countableTime->hour);
-                        $minutes = floor($countableTime->minute);
-                        $result = sprintf('%d days %d hours %d minutes', $days, $hours, $minutes);
-
-                        if ($adjustedDifferenceInSeconds >= $formattedTimeInSeconds) {
-                            return '<span style="color: red;">' . $result . '</span>';
-                        } else {
-                            $completeUnderTime = $completeUnderTime + 1;
-                            return '<span style="color: green;">' . $result . '</span>';
-
+                    foreach ($general_settings as $setting) {
+                        if (isset($setting->Days)) {
+                            $daysArray[] = $setting->Days;
                         }
                     }
+                    $taskdetails = Task_manage::where('types_of_works', $row->typesofwork_id)
+                                                ->where('task1_id', $row->receive_switch)
+                                                ->where('task2_id', $row->switch_type)
+                                                ->first();
+                    $working_hours = (isset($taskdetails['working_hours'])) ? $taskdetails['working_hours'] : 00;
+                    $working_minutes = (isset($taskdetails['working_minutes'])) ? $taskdetails['working_minutes'] : 00;
+                    $working_seconds = (isset($taskdetails['working_seconds'])) ? $taskdetails['working_seconds'] : 00;
+                    $timeFormatted = sprintf(
+                        "%02d:%02d:%02d",
+                        $working_hours,
+                        $working_minutes,
+                        $working_seconds
+                    );
 
-                    if ($differenceInSeconds >= $formattedTimeInSeconds) {
-                        return '<span style="color: red;">' . $endDateTime->diff($startDateTime)->format('%d days %h hours %i minute') . '</span>';
+                    $carbonDate = Carbon::parse($row->receive_time ?? Carbon::now());
+                    $currentDateTime = Carbon::parse($row->issue_time ?? Carbon::now());
+                    $if_not_issue = isset($row->issue_time) ? true : false;
+                    $totalDuration = Carbon::parse('00:00:00');
+
+                    if ($carbonDate->isSameDay($currentDateTime)) {
+
+                        $duration = $carbonDate->diffInMinutes($currentDateTime);
+                        $totalDuration->addMinutes($duration);
+
                     } else {
-                        return '<span style="color: green;">' . $endDateTime->diff($startDateTime)->format('%d days %h hours %i minute') . '</span>';
+                        // For the start date
+                        $startDay = $carbonDate->copy();
+                        list($Ehours, $Eminutes, $Eseconds) = sscanf($office_end_time, "%d:%d:%d");
+                        $endOfDay = $startDay->copy()->setTime($Ehours, $Eminutes, $Eseconds);
+                        $duration = $startDay->diffInMinutes($endOfDay);
+                        $totalDuration->addMinutes($duration);
+
+
+                        // For the end date
+                        $endDay = $currentDateTime->copy();
+                        list($Shours, $Sminutes, $Sseconds) = sscanf($office_start_time, "%d:%d:%d");
+                        $startOfDay = $endDay->copy()->setTime($Shours, $Sminutes, $Sseconds);
+                        $duration = $startOfDay->diffInMinutes($endDay);
+                        $totalDuration->addMinutes($duration);
+
+                         // For days in between
+                        $currentDay = $startDay->copy()->addDay();
+                        while ($currentDay->lt($endDay)) {
+                            $dayName = strtolower($currentDay->format('l'));
+                            if (in_array($dayName, $daysArray)) {
+                                $startTime = $currentDay->copy()->setTime($Shours, $Sminutes, $Sseconds);
+                                $endTime = $currentDay->copy()->setTime($Ehours, $Eminutes, $Eseconds);
+                                $duration = $startTime->diffInMinutes($endTime);
+                                $totalDuration->addMinutes($duration);
+                            }
+                            $currentDay->addDay();
+                        }
+
+
                     }
+
+                    $interval = carbon::now()->diff($totalDuration);
+                    $durationDay = $interval->days;
+                    $durationHours = $totalDuration->hour;
+                    $durationMinutes = $totalDuration->minute;
+                    $diffrenceOfSwitches = $totalDuration;
+
+                    // Check if the current date and time is after the specified date and time
+                    $diffrenceOfSwitches = $diffrenceOfSwitches->format('H:i:s');
+                    $diffrenceOfSwitches = strtotime($diffrenceOfSwitches);
+                    $timeFormatted = strtotime($timeFormatted);
+
+                    if($if_not_issue == false){
+                         return '<span style="color: black;">'.$durationDay.' Days '.$durationHours .' Hours '. $durationMinutes.' Minutes '. '</span>';
+                    }else{
+                        if ($diffrenceOfSwitches > $timeFormatted) {
+                            return '<span style="color: red;">'.$durationDay.' Days '.$durationHours .' Hours '. $durationMinutes.' Minutes '. '</span>';
+                        }else{
+                            return '<span style="color: green;">'.$durationDay .' Days '.$durationHours .' Hours '. $durationMinutes.' Minutes '. '</span>';
+                        }
+                     }
+                    return $totalDuration;
                 })
                 ->addColumn('created_date', function ($row) {
                     $createdDate = date('d-m-Y', strtotime($row->created_at));
                     return $createdDate;
                 })
                 ->rawColumns(['inswitch_time', 'outswitch_time', 'duration', 'order_no', 'created_date','mobile_no','customer_name'])
+                ->with('countAllResult', $countAllResult)
+                ->with('successCount', $successCount)
                 ->make(true);
 
         }
@@ -746,9 +802,8 @@ class ReportController extends Controller
             return DataTables::of($order_history)
                 ->addIndexColumn()
                 ->addColumn('order_no', function ($row) {
-                    $orderId = $row->order_id;
-                    $getOrderNo = order::where('id', $orderId)->first();
-                    return isset($getOrderNo->orderno) ? $getOrderNo->orderno : '';
+                    $orderNo = $row->order->orderno;
+                    return isset($orderNo) ? $orderNo : '';
                 })
                 ->addColumn('switch_name',function($row){
                     $getIssueDate = isset($row->issue_time) ? $row->issue_time : '';
@@ -764,9 +819,10 @@ class ReportController extends Controller
                     return $outswitch_html;
                 })
                 ->addColumn('whos_late', function ($row) {
-                    $getUserName = Admin::where('id', $row->user_id)->first();
-                    $userName = ($getUserName->firstname) . ($getUserName->lastname);
-                    return $userName;
+                    $getUserName = $row->user->firstname;
+                    $getUserName .= ' ';
+                    $getUserName .= $row->user->lastname;
+                    return  isset($getUserName) ? $getUserName : '';
                 })
                 ->rawColumns(['order_no','whos_late','switch_name'])
                 ->make(true);

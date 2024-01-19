@@ -64,7 +64,7 @@
                              </div>
                             <div class="col-md-6 mt-3" >
                                 <label>Performance : </label>
-                                <input type="text" class="rounded-circle" style="width:50px;" value="50%"disabled>
+                                <input type="text" class="rounded-circle" style="width:50px; height:50px;" value="50%"disabled>
                             </div>
                         </div>
                     </div>
@@ -82,7 +82,8 @@
                                     <th>Created Date</th>
                                 </tr>
                             </thead>
-                            <tbody></tbody>
+                            <tbody>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -96,57 +97,61 @@
 @section('page-js')
 
 <script type="text/javascript">
+
+
     $(function() {
 
         var table = $('#PerformanceTable').DataTable({
-            paging:false,
-            processing: true,
-            serverSide: true,
-            pageLength: 100,
-            ajax: {
-                url: "{{ route('reports.performance') }}",
-                data:function(d){
-                    d.department = $('#department').val();
-                    d.startDate = $('#startdate').val();
-                    d.endDate= $('#enddate').val();
-                }
+        paging:true,
+        processing: true,
+        serverSide: true,
+        pageLength: 25,
+        ajax: {
+            url: "{{ route('reports.performance') }}",
+            data:function(d){
+                d.department = $('#department').val();
+                d.startDate = $('#startdate').val();
+                d.endDate= $('#enddate').val();
             },
-            columns: [
-                {
-                    data: 'id',
-                    name: 'id'
-                },
-                {
-                    data: 'order_no',
-                    name: 'order_no'
-                },
-                {
-                    data:'customer_name',
-                    name:'customer_name'
-                },
-                {
-                    data: 'mobile_no',
-                    name: 'mobile_no'
-                },
-                {
-                    data: 'inswitch_time',
-                    name: 'inswitch_time'
-                },
-                {
-                    data: 'outswitch_time',
-                    name: 'outswitch_time'
-                },
-                {
-                    data: 'duration',
-                    name: 'duration'
-                },
-                {
-                    data: 'created_date',
-                    name: 'created_date'
-                },
-            ]
-        });
-
+        },
+        initComplete: function(settings, json) {
+            var countAllResult = json.countAllResult;
+            var successCount = json.successCount;
+            console.log(successCount);
+            console.log(countAllResult);
+        },
+        columns: [
+            { data: 'DT_RowIndex', 'orderable': false, 'searchable': false },
+            {
+                data: 'order_no',
+                name: 'order_no'
+            },
+            {
+                data:'customer_name',
+                name:'customer_name'
+            },
+            {
+                data: 'mobile_no',
+                name: 'mobile_no'
+            },
+            {
+                data: 'inswitch_time',
+                name: 'inswitch_time'
+            },
+            {
+                data: 'outswitch_time',
+                name: 'outswitch_time'
+            },
+            {
+                data: 'duration',
+                name: 'duration'
+            },
+            {
+                data: 'created_date',
+                name: 'created_date'
+            },
+        ]
+    });
 
         $('#department').on('change', function() {
             table.ajax.reload(); // Redraw the DataTable with the new filter
