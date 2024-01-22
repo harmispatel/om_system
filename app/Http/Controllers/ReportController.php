@@ -623,7 +623,7 @@ class ReportController extends Controller
                     $order_history = $order_history->whereBetween('created_at', [$startDate, $endDate]);
                 }
             }
-            $countAllResult = count($order_history);
+
             return DataTables::of($order_history)
                 ->addIndexColumn()
                 ->addColumn('order_no', function ($row) {
@@ -774,7 +774,6 @@ class ReportController extends Controller
                     return $createdDate;
                 })
                 ->rawColumns(['inswitch_time', 'outswitch_time', 'duration', 'order_no', 'created_date','mobile_no','customer_name'])
-                ->with('countAllResult', $countAllResult)
                 ->make(true);
 
         }

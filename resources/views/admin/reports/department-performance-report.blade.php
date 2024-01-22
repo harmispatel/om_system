@@ -136,7 +136,7 @@ function updateCounts() {
             },
         },
         initComplete: function(settings, json) {
-            var countAllResult = json.countAllResult;
+
             var pageInfo = table.page.info();
             var totalRecords = pageInfo.recordsTotal;
 

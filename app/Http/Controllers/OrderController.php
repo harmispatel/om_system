@@ -493,14 +493,9 @@ class OrderController extends Controller
             ->where('user_id', $userId)
             ->exists();
 
-                // $currentDateTime = new DateTime();
                 $currentDateTime = Carbon::now();
                 $currentTime = $currentDateTime->format('H:i:s');
-                // $startDateTime = clone $currentDateTime;
-                // $startDateTime->setTime(11, 0, 0);
 
-                // $endDateTime = clone $currentDateTime;
-                // $endDateTime->setTime(20, 0, 0);
                 $isWithinTimeRange =   $currentTime > $startDateTime &&  $currentTime < $endDateTime;
 
             if(!$existingScan && $isWithinTimeRange){
