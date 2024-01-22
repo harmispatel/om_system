@@ -30,6 +30,9 @@ class CreateOrdersTable extends Migration
             $table->string('handleby')->nullable();
             $table->string('Qrphoto')->nullable();
             $table->string('order_status')->nullable();
+            $table->tinyinteger('is_bloked')->nullable();
+            $table->text('block_reason')->nullable();
+            $table->integer('whos_block_order')->nullable();
             $table->timestamps();
         });
     }

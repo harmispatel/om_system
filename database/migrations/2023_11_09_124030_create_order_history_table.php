@@ -23,8 +23,11 @@ class CreateOrderHistoryTable extends Migration
             $table->integer('typesofwork_id')->nullable();
             $table->datetime('scan_date')->nullable();
             $table->datetime('receive_time')->nullable();
-            $table->datetime('issue_time')->nullable();          
-            $table->string('switch_type')->nullable();
+            $table->string('receive_switch',255)->nullable();
+            $table->longText('late_receive_reason')->nullable();
+            $table->datetime('issue_time')->nullable(); 
+            $table->string('switch_type',255)->nullable();
+            $table->longText('reason_for_late')->nullable();         
             $table->foreign('user_id')->references('id')->on('admins')->cascadeOnDelete()->cascadeOnUpdate(); 
             $table->foreign('order_id')->references('id')->on('orders')->cascadeOnDelete()->cascadeOnUpdate(); 
             $table->timestamps();

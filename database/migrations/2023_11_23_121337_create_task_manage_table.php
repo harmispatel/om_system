@@ -19,7 +19,7 @@ class CreateTaskManageTable extends Migration
             // $table->foreign('task1_id')->references('id')->on('permissions')->cascadeOnDelete()->cascadeOnUpdate(); 
             $table->integer('task2_id');
             // $table->foreign('task2_id')->references('id')->on('permissions')->cascadeOnDelete()->cascadeOnUpdate(); 
-           $table->string("working_hours")->nullable();
+            $table->string("working_hours")->nullable();
             $table->string("working_minutes")->nullable();
             $table->string('working_seconds')->default('00')->nullable();
             $table->integer('types_of_works')->nullable();

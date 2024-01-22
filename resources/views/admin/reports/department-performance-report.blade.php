@@ -104,9 +104,7 @@ function updateCounts() {
 
     // Get information about the table
     var pageInfo = table.page.info();
-
-    // Total records count
-    var totalRecords = pageInfo.recordsTotal;
+    var totalRecords = pageInfo.recordsDisplay;
 
     // Success count
     var successCount = $('.success').length;
