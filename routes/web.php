@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{AuthController,DashboardController,GeneralSettingController, RoleController, AdminController, BlockOrderController, OrderController, ReportController,QrCodeController,DompdfController, ReasonController, TaskManageController,types_workController};
+use App\Http\Controllers\{AuthController,DashboardController,GeneralSettingController, RoleController, AdminController, BlockOrderController, OrderController, ReportController,ReasonController, TaskManageController,types_workController};
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -98,11 +98,13 @@ Route::group(['prefix' => 'admin'], function ()
         // Orders
 
         Route::get('orders', [OrderController::class,'index'])->name('order');
-        Route::get('orders/create', [OrderController::class,'create'])->name('orders.create');
-        Route::post('orders/store', [OrderController::class,'store'])->name('orders.store');
         Route::get('ordersDetail/{id}',[OrderController::class,'show'])->name('order.show');
         Route::get('orders/retrive/{id}',[OrderController::class,'retriveOrder'])->name('order.retrive');
         Route::post('orders/destroy',[OrderController::class,'destroy'])->name('order.destroy');
+
+    Route::middleware(['checkOfficeHours'])->group(function () {
+        Route::get('orders/create', [OrderController::class,'create'])->name('orders.create');
+        Route::post('orders/store', [OrderController::class,'store'])->name('orders.store');
         route::get('/orders/issue/design/{id}',[OrderController::class,'issueToDesign'])->name('orders.issue.design');
         route::get('/orders/issue/waxing/{id}',[OrderController::class,'issueToWaxing'])->name('orders.issue.waxing');
         route::get('/orders/receive/design/{id}',[OrderController::class,'receiveForDesign'])->name('orders.rec.design');
@@ -124,7 +126,10 @@ Route::group(['prefix' => 'admin'], function ()
         route::post('/orders/issue/late',[OrderController::class,'lateIssue'])->name('late-issue');
         route::post('/orders/receive/late',[OrderController::class,'lateReceive'])->name('late-receive');
         route::post('/orders/block',[OrderController::class,'blockOrder'])->name('order.block');
+    });
         route::get('/block-orders',[OrderController::class,'blockOrdersList'])->name('orders.blocklist');
+
+
         //getdata
         Route::post('/get-data',[OrderController::class,'getData'])->name('getdata');
         Route::get('/fetch-data',[OrderController::class,'fetchdata'])->name('fetchdata');
