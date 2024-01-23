@@ -8,9 +8,9 @@ use Spatie\Permission\Models\{Role, Permission};
 use Yajra\DataTables\Facades\DataTables;
 use App\Traits\ImageTrait;
 use App\Models\{Admin, RoleHasPermissions};
-use Hash;
-use DB;
-use Auth;
+use phpseclib3\Crypt\Hash;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 
 class AdminController extends Controller

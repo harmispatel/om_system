@@ -57,7 +57,7 @@ class OrderController extends Controller
         }
     }
 
-      function calculateFinishDateTime($totalHours, $startDateTime)
+    function calculateFinishDateTime($totalHours, $startDateTime)
     {
         $currentDateTime = Carbon::parse($startDateTime);
         $currentDate = Carbon::now();
