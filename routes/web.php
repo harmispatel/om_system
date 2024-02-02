@@ -129,7 +129,6 @@ Route::group(['prefix' => 'admin'], function ()
     });
         route::get('/block-orders',[OrderController::class,'blockOrdersList'])->name('orders.blocklist');
 
-
         //getdata
         Route::post('/get-data',[OrderController::class,'getData'])->name('getdata');
         Route::get('/fetch-data',[OrderController::class,'fetchdata'])->name('fetchdata');
@@ -140,7 +139,6 @@ Route::group(['prefix' => 'admin'], function ()
         Route::get('reports/order-history/details/{id}', [ReportController::class,'orderHistoryReportDetails'])->name('reports.order_history_details');
         Route::get('reports/department-pending-orders/', [ReportController::class,'departmentPendingOrdersReport'])->name('reports.department_pending_orders');
         Route::get('reports/typesofworks-pending/', [ReportController::class,'typesOfWorksPendingReport'])->name('reports.typesofworks_pending');
-        Route::get('reports/order-history/trassed',[ReportController::class,'trassedOrders'])->name('reports.trassed');
         Route::get('reports/department-performance/', [ReportController::class,'departmentPerformanceReport'])->name('reports.performance');
         Route::get('reports/delay-reason/', [ReportController::class,'delayReasonReport'])->name('reports.delayreason');
         Route::get('reports/delay-reason/receive', [ReportController::class,'delayReceiveReasonReport'])->name('reports.delayreceivereason');

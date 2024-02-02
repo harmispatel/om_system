@@ -26,11 +26,6 @@
                     </ol>
                 </nav>
             </div>
-            <div class="col-md-4" style="text-align: right;">
-                <a href="{{ route('reports.trassed') }}" class="btn btn-sm bg-danger">
-                <i class="fab fa-google-drive text-light"></i>
-                </a>
-            </div>
         </div>
     </div>
 

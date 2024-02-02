@@ -34,7 +34,7 @@ class ReportController extends Controller
             }else{
                 $orders = $orders->latest();
             }
-            $orders = $orders->where('is_bloked', 1)->get();
+            $orders = $orders->where('is_bloked', 1)->where('orderno','!=',null)->get();
 
             return DataTables::of($orders)
             ->addIndexColumn()
@@ -872,8 +872,4 @@ class ReportController extends Controller
         return view('admin.reports.delay_reason_report',compact('departments'));
     }
 
-
-    public function trassedOrders(Request $request){
-       return redirect()->back()->with('error','work In Process On Trassed');
-    }
 }

@@ -224,7 +224,7 @@ class OrderController extends Controller
             }else{
                 $orders = order::whereBetween('created_at', [$firstDayOfCurrentMonth, $lastDayOfLastMonth])->latest();
             }
-            $orders->where('is_bloked','!=', 0);
+            $orders->where('is_bloked','!=', 0)->where('orderno','!=',null);
             // if($user_type != 1){
             //     $orders = $orders->where('order_status',$user_type)->get();
             // }
@@ -243,15 +243,15 @@ class OrderController extends Controller
 
                 $getrole = Role::where('id', $orders->order_status)->first();
 
-                $getrole = Role::where('id', $orders->order_status)->first();
                 if(!$getrole){
-                if($orders->order_status == '11'){
-                    $html_button = "<span class='badge bg-success'>Delivery Completed</span>";
-                    return $html_button;
-                }else{
-                    $html_button = "<span class='badge bg-warning'>Saleing</span>";
-                    return $html_button;
-                }
+
+                    if($orders->order_status == '11'){
+                        $html_button = "<span class='badge bg-success'>Delivery Completed</span>";
+                        return $html_button;
+                    }else{
+                        $html_button = "<span class='badge bg-warning'>Saleing</span>";
+                        return $html_button;
+                    }
                 }else{
                     return isset ($getrole->name) ? $getrole->name : '';
                 }
@@ -309,27 +309,33 @@ class OrderController extends Controller
 
     public function blockOrder(Request $request){
 
-        $id = $request->order_id;
-        $reason = $request->blockReason;
+        $id = $request->orderId;
         $u_id = Auth::guard('admin')->user()->id;
 
-        try {
+        $request->validate([
+            'orderId' => 'required',
+            'block_reason' => 'required_if:block_reason_other,null',
+            'block_reason_other' => 'required_if:block_reason,null'
+        ]);
+
+        try{
+
+            if($request->block_reason == '' || $request->block_reason == null){
+                $inputReason = $request->block_reason_other;
+            }else{
+                $inputReason = $request->block_reason;
+            }
+
             $input = order::find($id);
-            $input->block_reason = $reason;
+            $input->block_reason = $inputReason;
             $input->is_bloked = 0;
             $input->whos_block_order = $u_id;
             $input->update();
 
-            return response()->json([
-                'success' => 1,
-                'message' => "Order has been Block successfully..",
-            ]);
+            return redirect()->back()->with('success','Order Blocked Successfully');
 
         } catch (\Throwable $th) {
-            return response()->json([
-                'error' => 0,
-                'message' => "Internal Server Error!",
-            ]);
+            return redirect()->back()->with('error','Internal Server Error!');
         }
     }
     /**
@@ -379,7 +385,7 @@ class OrderController extends Controller
             $user_type = Auth::guard('admin')->user()->user_type;
 
 
-            $user_id =  Auth::guard('admin')->user()->id;
+             $user_id =  Auth::guard('admin')->user()->id;
              $user_type =  Auth::guard('admin')->user()->user_type;
 
              //     $orders = order::create($input);

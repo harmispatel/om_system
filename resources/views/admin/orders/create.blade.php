@@ -138,7 +138,7 @@
                                                 @endif
                                             </div>
                                         </div>
-                                        
+
                                     </div>
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
@@ -182,7 +182,7 @@
                                     </div>
 
                                     <div class="row">
-                                     
+
                                         <div class="col-md-6 mb-3">
                                             <div class="form-group">
                                                 <label for="gold" class="form-label">Who's Metal?<span
@@ -224,7 +224,7 @@
                                             <div class="form-group">
                                                 <label for="image" class="form-label">Photo<span
                                                         class="text-danger">*</span></label>
-                                                <input type="file" name="orderimage[]" id="orderimage"
+                                                <input type="file" name="orderimage[]" id="orderimage" onchange="validateFileType()"
                                                     class="form-control {{ (count($image_errors) > 0) ? 'is-invalid' : '' }}"  multiple>
                                                 @if(count($image_errors))
                                                 @foreach ($image_errors as $image_error)
@@ -237,7 +237,7 @@
                                                     @endif
                                                 @endforeach
                                             @endif
-                                            </div>    
+                                            </div>
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <div class="form-group">
@@ -279,7 +279,7 @@
                                                         class="text-danger">*</span></label>
                                                 <input type="text" name="handleby" placeholder="search" id="handleby"
                                                 class="form-control">
-                                                
+
                                                 {{-- <select id="search-results" style="display: none;"
                                                     class="form-control"></select> --}}
                                                 @if ($errors->has('handleby'))
@@ -292,7 +292,7 @@
                                     </div>
                                 </div>
                             </div>
-                        
+
                         </div>
 
                     </div>
@@ -632,7 +632,7 @@ $('#metalwt').change('input', function(e) {
             minLength: 1 // Minimum number of characters before making an AJAX request
         });
     });
-    
+
     $(document).ready(function() {
             // Restrict input to numeric values only
             $('#charges').on('input', function() {
@@ -655,14 +655,36 @@ $('#metalwt').change('input', function(e) {
             });
         });
 
-      
+        function validateFileType() {
+            // Get the file input element
+            var fileInput = document.getElementById('orderimage');
+
+            // Get the selected file
+            var file = fileInput.files[0];
+
+            // Check if a file is selected
+            if (file) {
+                // Get the file extension
+                var fileExtension = file.name.split('.').pop().toLowerCase();
+
+                // Check if the file extension is jpg or png
+                if (fileExtension !== 'jpg' && fileExtension !== 'jpeg' && fileExtension !== 'png' && fileExtension !== 'gif') {
+                    // Show an error message
+                    alert('Please select a JPG or PNG or GIF file.');
+                    // Clear the file input
+                    fileInput.value = '';
+                }
+            }
+        }
+
+
     </script>
 
 @endsection
 
 
-{{-- 
-// metal-weight    
+{{--
+// metal-weight
 
   $('#metalwt').on('input', function() {
             var metalwt = $(this).val();
@@ -708,9 +730,9 @@ $('#metalwt').change('input', function(e) {
  --}}
 
 
- {{-- 
+ {{--
     // handleby
-    
+
     $(document).ready(function() {
     var query = $(this).val();
     $('#handleby').select2({
@@ -754,7 +776,7 @@ $('#metalwt').change('input', function(e) {
     });
 }); --}}
 
-{{-- 
+{{--
 //metal-weight
 
 $('#metalwt').on('input', function() {

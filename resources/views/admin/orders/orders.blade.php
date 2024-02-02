@@ -16,7 +16,7 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <form action="{{ route('order.block') }}" method="POST" id="lateIssueForm">
+        <form action="{{ route('order.block') }}" method="POST">
             @csrf
             <input type="hidden" id="orderId" name="orderId">
             <div class="col-md-12 mb-3">
@@ -32,13 +32,13 @@
                                 </div>
                                 <hr style="margin: 0.5rem 0">
                             @endforeach
-                            <!-- <div class="mb-1">
-                                <input type="radio" name="switch1_option" id="switch1_other" value="">
-                                <label for="switch1_other" style="cursor: pointer; font-weight:700; font-size:15px;">Other</label>
+                            <div class="mb-1">
+                                <input type="radio" name="block_reason" id="block_reason_other" value="">
+                                <label for="block_reason_other" style="cursor: pointer; font-weight:700; font-size:15px;">Other</label>
                                 <div id="otherReasonContainer" style="display:none;">
-                                    <input type="text" name="switch1_text" class="form-control" id="otherReasonInput" placeholder="Enter your reason">
+                                    <input type="text" name="block_reason_other" class="form-control" id="otherReasonInput" placeholder="Enter your reason">
                                 </div>
-                            </div> -->
+                            </div>
                         @endif
                     </div>
             </div>
@@ -211,32 +211,32 @@
         });
 
 
-    $('#lateIssueForm').on('submit', function(e) {
-        e.preventDefault(); // Prevent the default form submission
-        const blockReason = $('#block_reason').val();
-        const order_id = $('#orderId').val();
+        $('#lateIssueForm').on('submit', function(e) {
+            e.preventDefault(); // Prevent the default form submission
+            const blockReason = $('#block_reason').val();
+            const order_id = $('#orderId').val();
 
-        $.ajax({
-            type: "POST",
-            url: "{{ route('order.block') }}",
-            data: {
-                "_token": "{{ csrf_token() }}",
-                "blockReason": blockReason,
-                "order_id":order_id,
-            },
-            dataType: 'JSON',
-            success: function(response) {
-                if (response.success == 1) {
-                    toastr.success(response.message);
-                    $('#mymodel').hide();
-                    table.ajax.reload();
-                } else {
-                    toastr.error(response.message);
-                    $('#mymodel').hide();
+            $.ajax({
+                type: "POST",
+                url: "{{ route('order.block') }}",
+                data: {
+                    "_token": "{{ csrf_token() }}",
+                    "blockReason": blockReason,
+                    "order_id":order_id,
+                },
+                dataType: 'JSON',
+                success: function(response) {
+                    if (response.success == 1) {
+                        toastr.success(response.message);
+                        $('#mymodel').hide();
+                        table.ajax.reload();
+                    } else {
+                        toastr.error(response.message);
+                        $('#mymodel').hide();
+                    }
                 }
-            }
+            });
         });
-    });
 
     });
 
@@ -250,13 +250,29 @@ $(document).ready(function() {
         if ($('input[name="block_reason"]:checked').length > 0) {
             // Enable the "Issue" button
             $("#submitIssue").prop('disabled', false);
+            if ($('input[name="block_reason"]:checked').val() === '') {
 
+                $("#submitIssue").prop('disabled', true);
+                $("#otherReasonContainer").show();
+
+            } else {
+                $("#otherReasonContainer").hide();
+            }
         } else {
             // Disable the "Issue" button
             $("#submitIssue").prop('disabled', true);
         }
     });
 
+});
+
+$('#otherReasonInput').on('keyup',function(){
+    var inp = $(this).val();
+    if(inp.length > 0){
+        $("#submitIssue").prop('disabled', false);
+    }else{
+        $("#submitIssue").prop('disabled', true);
+    }
 });
      // Function for change block of User
     function BlockOrder(is_bloked, id) {
