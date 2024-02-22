@@ -20,8 +20,8 @@ class AdminSeeder extends Seeder
 
         $user = Admin::create(
         [
-            'firstname' => 'Hasan',
-            'lastname' => 'Karadiya',
+            'firstname' => 'jeet',
+            'lastname' => 'limbachiya',
             'email'  => 'admin@gmail.com',
             'user_type' => 1,
             'password' => Hash::make(123456),
@@ -29,11 +29,11 @@ class AdminSeeder extends Seeder
         ]);
 
         $role = Role::create(['name' => 'Admin']);
-     
+
         $permissions = Permission::pluck('id','id')->all();
-   
+
         $role->syncPermissions($permissions);
-     
+
         $user->assignRole([$role->id]);
     }
 }
