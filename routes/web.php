@@ -39,8 +39,8 @@ Route::post('admin/do/login', [AuthController::class,'Adminlogin'])->name('admin
 Route::get('/logout', [AuthController::class, function() {
 
         Auth::guard('admin')->logout();
+        return redirect()->route('admin.login')->with('success', 'User Logout SuccessFully...');
 
-    return redirect()->route('admin.login')->with('success', 'User Logout SuccessFully...');
 }])->name('admin.logout');
 
   //print

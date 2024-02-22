@@ -25,12 +25,15 @@ class BlockOrderController extends Controller
         $request->validate([
             'reason'  => 'required'
         ]);
-     try{
-        $input = $request->except('_token');
-        $storeReason = Block_reason::create($input);
-        return redirect()->route('block-reasons.create')->with('success','Block Reason Added SuccessFully');
-     }catch(\Throwable $th){
-        return redirect()->back()->with('error','internal server error!');
-     }
+
+        try{
+
+            $input = $request->except('_token');
+            $storeReason = Block_reason::create($input);
+            return redirect()->route('block-reasons.create')->with('success','Block Reason Added SuccessFully');
+
+        }catch(\Throwable $th){
+            return redirect()->back()->with('error','internal server error!');
+        }
    }
 }

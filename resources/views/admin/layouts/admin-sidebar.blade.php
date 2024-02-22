@@ -30,7 +30,7 @@
 
             {{-- Task Management Nav --}}
             <li class="nav-item">
-                <a class="nav-link {{ $currentRouteName == 'task-management' ? '' : 'collapsed' }}" href="{{route('task-manage.list')}}">
+                <a class="nav-link {{ $currentRouteName == 'task-management' || $currentRouteName == 'task-manage.list' ? '' : 'collapsed' }}" href="{{route('task-manage.list')}}">
                     <i class="fas fa-tasks"></i>
                     <span>Task Management</span>
                 </a>

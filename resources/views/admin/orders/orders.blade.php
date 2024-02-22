@@ -110,7 +110,6 @@
                                         <th scope="col">Handle By</th>
                                         <th scope="col">Order Status</th>
                                         <th scope="col">Created Date</th>
-                                        <!-- <th scope="col">Block Status</th> -->
                                         <th scope="col">Actions</th>
                                     </tr>
                                 </thead>
@@ -193,10 +192,6 @@
                     data:'created_date',
                     name:'created_date'
                 },
-                // {
-                //     data:'block',
-                //     name:'block'
-                // },
                 {
                     data: 'actions',
                     name: 'actions',
@@ -240,61 +235,41 @@
 
     });
 
-$(document).ready(function() {
-    // Initially, disable the "Issue" button
-    $("#submitIssue").prop('disabled', true);
+    $(document).ready(function() {
+        // Initially, disable the "Issue" button
+        $("#submitIssue").prop('disabled', true);
 
-    // Check if any radio button with the name 'switch1' is selected
-    $('input[name="block_reason"]').on('change', function() {
+        // Check if any radio button with the name 'switch1' is selected
+        $('input[name="block_reason"]').on('change', function() {
 
-        if ($('input[name="block_reason"]:checked').length > 0) {
-            // Enable the "Issue" button
-            $("#submitIssue").prop('disabled', false);
-            if ($('input[name="block_reason"]:checked').val() === '') {
+            if ($('input[name="block_reason"]:checked').length > 0) {
+                // Enable the "Issue" button
+                $("#submitIssue").prop('disabled', false);
+                if ($('input[name="block_reason"]:checked').val() === '') {
 
-                $("#submitIssue").prop('disabled', true);
-                $("#otherReasonContainer").show();
+                    $("#submitIssue").prop('disabled', true);
+                    $("#otherReasonContainer").show();
 
+                } else {
+                    $("#otherReasonContainer").hide();
+                }
             } else {
-                $("#otherReasonContainer").hide();
+                // Disable the "Issue" button
+                $("#submitIssue").prop('disabled', true);
             }
-        } else {
-            // Disable the "Issue" button
+        });
+
+    });
+
+    $('#otherReasonInput').on('keyup',function(){
+        var inp = $(this).val();
+        if(inp.length > 0){
+            $("#submitIssue").prop('disabled', false);
+        }else{
             $("#submitIssue").prop('disabled', true);
         }
     });
 
-});
-
-$('#otherReasonInput').on('keyup',function(){
-    var inp = $(this).val();
-    if(inp.length > 0){
-        $("#submitIssue").prop('disabled', false);
-    }else{
-        $("#submitIssue").prop('disabled', true);
-    }
-});
-     // Function for change block of User
-    function BlockOrder(is_bloked, id) {
-
-        $.ajax({
-            type: "POST",
-            url: "{{ route('order.block') }}",
-            data: {
-                "_token": "{{ csrf_token() }}",
-                "is_bloked": is_bloked,
-                "id": id
-            },
-            dataType: 'JSON',
-            success: function(response) {
-                if (response.success == 1) {
-                    toastr.success(response.message);
-                } else {
-                    toastr.error(response.message);
-                }
-            }
-        })
-    }
     // Function for Delete Record
     function blockOrderRecord(id){
         swal({
